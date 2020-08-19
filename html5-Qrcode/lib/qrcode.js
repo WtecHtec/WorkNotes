@@ -60,7 +60,6 @@
             }
 
             oFReader.onload = function(oFREvent) {
-			    console.log('oFREvent',oFREvent.target.result)
                 qrcode.decode(oFREvent.target.result);
                 qrcode.callback = function(data) {
 					
