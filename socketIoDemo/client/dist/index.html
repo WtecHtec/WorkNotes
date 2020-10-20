@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>CodePen - Starry Sky</title>
+		<link href="http://cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+		<link rel="stylesheet" href="./style.css">
+		<link rel="stylesheet" href="./chart.css">
+
+	</head>
+	<body>
+
+
+		<div id="App">
+			<div class="main" v-if="!surejoin">
+				<div class="nick-name">
+					输入名称：
+					<input class="nick-name-input" v-model.trim="nickName" />
+					<div class="nick-name-btn">
+						<div class="enter-btn" @click="onInputNickName" :style="{'animation-name': nickName?'login-btn':''}">→</div>
+					</div>
+				</div>
+			</div>
+			<div class="main" v-show="surejoin" style="background-color: #78909c">
+
+				<div class="noite"></div>
+
+				<div class="constelacao"></div>
+
+				<div class="lua">
+					<div class="textura"></div>
+				</div>
+
+				<div class="chuvaMeteoro"></div>
+
+				<div class="floresta">
+					<img src="https://raw.githubusercontent.com/interaminense/starry-sky/master/src/img/bgTree.png" alt="" />
+				</div>
+
+				<div class="chat-room">
+					<div class="chat-room-header">
+						<div style="position: relative;" id="toInputDiv">
+							<i @click="onAdd" id="addbtn"  class="fa fa-plus-circle icon" aria-hidden="true"></i>
+							<i  id="anAddbtn" class="fa fa-plus-circle icon" aria-hidden="true"></i>
+							<div class="input-div">
+								<input class="nick-name-input acount-nick-input" v-model.trim="toNickName" />
+								<i @click='handleConnection' class="fa fa-check-circle icon" aria-hidden="true"></i> 
+								<!-- <i class="fa fa-times-circle icon" aria-hidden="true" ></i>	 -->
+							</div>
+						</div>
+						<div class="chat-room-title">{{ toNickName }}</div>
+					</div>
+					
+					<div class="chat-content">
+						<template v-for="item in msgDatas">
+							<div v-if="item.type === 'left'" class="from-msg-div msg-left">
+								{{ item.msg }}
+							</div>
+											
+											
+							<div  v-if="item.type === 'right'" class="from-msg-div msg-right">
+								{{ item.msg }}
+							</div>
+						</template>
+					</div>
+					
+					<div class="sendmsg-div" v-if="connectionStatus">
+						<textarea rows="3" cols="125" v-model.trim="msg" @keyup.enter="handleSendMsg($event)" ></textarea>
+						<div class="sendbtn-div" @click="handleSendMsg">
+							<i 
+							style="color: #3f51b5; vertical-align: bottom;margin: 0px;"  class="fa fa-location-arrow icon" aria-hidden="true"></i> 
+						</div>
+					</div>
+					
+				</div>
+			</div>
+
+		</div>
+
+	</body>
+	<!-- partial -->
+   <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+	<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+	<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+     
+	<script src="./script.js"></script>
+	<script src="./anime.min.js"></script>
+	<script src="./chat.js"></script>
+
+	</body>
+</html>
