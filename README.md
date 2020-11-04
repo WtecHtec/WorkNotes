@@ -7,3 +7,4 @@
 5. JavaHttpTool maven集成的http请求工具类
 6. mobileEvent 前端手机的触摸事件
 7. socketIoDemo 使用 socketIo js 实现的聊天页面
+8. echartBmap echart百度地图 飞线图

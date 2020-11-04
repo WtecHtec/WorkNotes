@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+          <!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
+        <div id="main" style="width: 600px;height:400px;"></div>
+       <!--百度地图库 先使用外链测试HTTPS-->
+           <script type="text/javascript" src="https://api.map.baidu.com/api?v=2.0&ak=b32lBo1C2DnpzToMuT1URU79KV5Fl80K"></script>
+        <script  src="./dist/echarts.min.js" ></script>
+        <script src="./dist/extension/bmap.min.js"></script>
+        <script>
+
+            let   mapStyle = {
+                styleJson: [
+                    {
+                        'featureType': 'water',
+                        'elementType': 'all',
+                        'stylers': {
+                            'color': '#395a75'
+                        }
+                    }, {
+                        'featureType': 'land',
+                        'elementType': 'all',
+                        'stylers': {
+                            'color': '#285069'
+                        }
+                    }, {
+                        'featureType': 'railway',
+                        'elementType': 'all',
+
+                    }, {
+                        'featureType': 'highway',
+                        'elementType': 'all',
+
+                    }, {
+                        'featureType': 'highway',
+                        'elementType': 'labels',
+
+                    }, {
+                        'featureType': 'arterial',
+                        'elementType': 'geometry',
+
+                    }, {
+                        'featureType': 'arterial',
+                        'elementType': 'geometry.fill',
+                        'stylers': {
+                            'color': '#fefefe'
+                        }
+                    }, {
+                        'featureType': 'poi',
+                        'elementType': 'all',
+
+                    }, {
+                        'featureType': 'green',
+                        'elementType': 'all',
+
+                    }, {
+                        'featureType': 'subway',
+                        'elementType': 'all',
+
+                    }, {
+                        'featureType': 'manmade',
+                        'elementType': 'all',
+                       
+                    }, {
+                        'featureType': 'local',
+                        'elementType': 'all',
+                       
+                    }, {
+                        'featureType': 'arterial',
+                        'elementType': 'labels',
+                      
+                    }, {
+                        'featureType': 'boundary',
+                        'elementType': 'all',
+                       
+                    }, {
+                        'featureType': 'building',
+                        'elementType': 'all',
+                        
+                    }, {
+                        'featureType': 'label',
+                        'elementType': 'labels.text.fill',
+                        
+                    }]
+            }
+
+            let  geo = {
+                "map": "bmap",
+                "polyline": true,
+                "progressiveThreshold": 100,
+                "progressive": 400,
+                "label": {
+                    "emphasis": {
+                        "show": false
+                    }
+                },
+                "roam": true,
+                "itemStyle": {
+                    "normal": {
+                        "areaColor": "#E7A060",   //连接线的颜色
+                        "borderColor": "#ff9900"   //移动飞线的颜色
+                    },
+                    "emphasis": {
+                        "areaColor": "#F300FF" //
+                    }
+                }
+            }
+            // 基于准备好的dom，初始化echarts实例
+        var myChart = echarts.init(document.getElementById('main'));
+
+        // 指定图表的配置项和数据
+        // var option = {
+        //     title: {
+        //         text: 'ECharts 入门示例'
+        //     },
+        //     tooltip: {},
+        //     legend: {
+        //         data:['销量']
+        //     },
+        //     xAxis: {
+        //         data: ["衬衫","羊毛衫","雪纺衫","裤子","高跟鞋","袜子"]
+        //     },
+        //     yAxis: {},
+        //     series: [{
+        //         name: '销量',
+        //         type: 'bar',
+        //         data: [5, 20, 36, 10, 10, 20]
+        //     }]
+        // };
+
+
+
+let deviceList = [{
+    deviceCount: 1,
+    lat: 30.6799428454,
+    lng: 104.067923463,
+    province: "四川省",
+    provinceId: "22",
+},
+{
+    deviceCount: 1,
+    lat: 26.6299067414,
+    lng: 106.709177096,
+    province: "贵州省",
+    provinceId: "23",
+},
+{
+    deviceCount: 18,
+    lat: 22.8064929356,
+    lng: 108.297233556,
+    province: "广西壮族自治区",
+    provinceId: "25",
+}
+]
+
+let pointData = []
+
+let lineData = []
+
+
+  for (var i = 0; i < deviceList.length; i++) {
+    let device = deviceList[i];
+    if(!device.lng|| !device.lat){
+       continue;
+    }
+    let toName = device.province?device.province:"";
+   lineData.push({ "fromName":"总部","toName":toName,"coords":[ [device.lng,device.lat],[116.3,39.9]]});
+   pointData.push({"name":toName,"value":[device.lng,device.lat,device.deviceCount]});
+}
+
+  var option = {
+                    //百度地图样式
+                    bmap: {
+                        center: [104.114129, 37.550339],
+                        zoom: 4,
+                        roam: true,
+                        mapStyle: mapStyle
+                    },
+                    tooltip : {
+                        trigger: 'item',
+                        "formatter": function(res){
+                            if(res.seriesType==="effectScatter"){
+                                return res.name+" "+res.value[2]+' 台';
+                            }
+
+                        }
+                    },
+
+                    dataRange: {
+                        show:false,
+                        min : 0,
+                        max : 100,
+                        calculable : true,
+                        color: ['#ff3333', 'orange', 'yellow','lime','aqua'],
+                        textStyle:{
+                            color:'#fff'
+                        }
+                    },
+                    // 地图飞线样式选项
+                    geo: geo,
+                    series: [
+                        {
+                            //飞线样式
+                            "name": "",
+                            "type": "lines",
+                            "coordinateSystem": "bmap",
+
+
+                            // "zlevel": 2,
+                            "symbol": ['none', 'arrow'],
+                            // "symbolSize": 20,
+                            "effect": {
+                                symbolSize: 5,
+                                "show": true,
+                                "scaleSize": 2,
+                                "period": 20,
+                                "color": '#FFF',
+                                "shadowBlur": 10,
+                                constantSpeed: 50
+                                // "show": true,
+                                // "period": 6,
+                                // "trailLength": 0,
+                                // // "symbol": "path://M128 724.224c0 42.432 19.2 80.192 48 103.744l0 84.864C176 941.12 195.2 960 224 960l48 0C300.8 960 320 941.12 320 912.832l0-47.168 384 0 0 47.168C704 941.12 723.2 960 752 960l48 0c28.8 0 48-18.88 48-47.168l0-84.864C876.8 804.352 896 766.656 896 724.224L896 252.608C896 87.552 723.2 64 512 64 300.8 64 128 87.552 128 252.608L128 724.224zM296 771.392c-38.4 0-72-33.024-72-70.72 0-37.696 33.6-70.72 72-70.72 38.4 0 72 33.024 72 70.72C368 738.368 334.4 771.392 296 771.392zM728 771.392c-38.4 0-72-33.024-72-70.72 0-37.696 33.6-70.72 72-70.72s72 33.024 72 70.72C800 738.368 766.4 771.392 728 771.392zM800 488.448l-576 0L224 252.608l576 0L800 488.448z",
+                                // "symbolSize": 8  //动画图大小
+                            },
+                            "lineStyle": {
+                                "normal": {
+                                    "color": new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: '#58B3CC'
+                                    }, {
+                                        offset: 1,
+                                        color: '#ffbf31'
+                                    }], false),
+                                    "width": 2,  //飞线粗细
+                                    "opacity": 0.3,
+                                    "curveness": 0.3
+                                },
+                                // normal:{
+                                //     borderColor:'rgba(100,149,237,1)',
+                                //     borderWidth:0.5,
+                                //     areaStyle:{
+                                //         color: '#1b1b1b'
+                                //     }
+                                // }
+                            },
+                            // "itemStyle": {
+                            //     "normal": {
+                            //         "borderWidth":1,
+                            //         "lineStyle": {
+                            //             "type": 'solid',
+                            //             "shadowBlur": 10
+                            //         }
+                            //     }
+                            // },
+                            "data":lineData,
+                        },
+                        {
+                            //终点点位样式
+                            "name": "",
+                            "type": "effectScatter",
+                            "coordinateSystem": "bmap",
+
+                            // "zlevel": 2,
+
+                            "rippleEffect": {
+                                period: 5,
+                                scale: 3,
+                                "brushType": "stroke"
+                            },
+
+                            // symbol:'emptyCircle',
+                            symbolSize : 10,
+
+
+                            // effect : {
+                            //     show: true,
+                            //     shadowBlur : 0
+                            // },
+
+                            itemStyle:{
+                                normal:{
+                                    "color": "#FF4040"
+                                },
+                            },
+
+                            "label": {
+                                "normal": {
+                                    "show": false,
+                                    "position": "right",
+                                    "formatter": function(res){
+                                        if(res.seriesType==="effectScatter"){
+                                            return '';
+                                        }
+                                    }
+                                }
+                            },
+                            // "itemStyle": {
+                            //     // "normal": {
+                            //     //     "color": "#ff00ff",
+                            //     // }
+                            //     "normal":{
+                            //         "label":{ "show" :true},
+                            //         symbolSize: 1000,
+                            //         "color": "#FF4040"
+                            //     },
+                            //     "emphasis": {
+                            //         "label":{ "position":'top'}
+                            //     }
+                            // },
+                            //出发点和终点坐标
+                            "data": pointData,
+                        }
+                    ]
+                };
+
+
+
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+        </script>
+	</body>
+</html>
