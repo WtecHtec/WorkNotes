@@ -39,7 +39,7 @@ function createComponentTab(editor) {
 
     let pointsTabComponent = new ht.Tab();
     pointsTabComponent.setName(Component);
-    editor.leftTopTabView.getTabModel().add(pointsTabComponent);
+    editor.leftTopTabView.getTabModel().add(pointsTabComponent,2);
 
     console.log('editor.leftTopTabView.getTabModel():',editor)
 
@@ -208,23 +208,81 @@ pointsExplorerComponent.tree.menu.addTo(pointsExplorerComponent.tree.getView())
     pointsExplorerComponent.addNewFolderItem( pointsExplorerComponent.listMenuItems, pointsExplorerComponent.list)
     pointsExplorerComponent.addRenameItem( pointsExplorerComponent.listMenuItems, pointsExplorerComponent.list)
 
+
+    // action: function() {
+    //     // var data = pointsExplorerComponent.tree.sm().ld();
+    //     // console.log('新建图标',  data)
+    //     //  修改图标路径
+    //     console.log('拷贝：', pointsExplorerComponent)
+      
+    //     if(pointsExplorerComponent.copyFileInfos.length > 0) {
+    //         editor.components.copyFileInfos = []
+    //         editor.components.copyFileInfos =  pointsExplorerComponent.copyFileInfos
+    //     }
+    //     editor.copyFiles()
+        
+        
+    // },
+
     // 拷贝
     pointsExplorerComponent.listMenuItems.push({
         id: "copyComponentDiy",
         label: '拷贝',
         action: function() {
-            // var data = pointsExplorerComponent.tree.sm().ld();
+          
             // console.log('新建图标',  data)
             //  修改图标路径
-            console.log('拷贝：', pointsExplorerComponent)
+            // console.log('拷贝：', pointsExplorerDisplay)
           
-            if(pointsExplorerComponent.copyFileInfos.length > 0) {
-                editor.components.copyFileInfos = []
-                editor.components.copyFileInfos =  pointsExplorerComponent.copyFileInfos
-            }
-            editor.copyFiles()
+            // if(pointsExplorerDisplay.copyFileInfos.length > 0) {
+            //     editor.displays.copyFileInfos = []
+            //     editor.displays.copyFileInfos =  pointsExplorerDisplay.copyFileInfos
+            // }
+
+            var pastedata = pointsExplorerComponent.tree.sm().ld();
+            var data = pointsExplorerComponent.list.sm().ld();
+    
+            // console.log('新建图标',  data)
+            //  修改图标路径
+            console.log('拷贝：', data)
+            
+            let imgUrl =  data._image.split('?t')[0]
+            data._icon = imgUrl
+            data._image =  imgUrl
+            data.value.fileIcon =  imgUrl
+            data.image = true
+           
+
+            // console.log('拷贝 symbols ：', editor.symbols.copyFileInfos)
+            // console.log('拷贝 pointsExplorerDiy：', pointsExplorerDisplay.copyFileInfos)
+            
+            editor.requestBase64(data.url,function(dataBase){
+                console.log('requestBase64' , dataBase)
+                data.content =  dataBase
+                data.name =  data._name
+
+                editor.requestBase64(imgUrl,function(imageBase){
+
+                    data.image  = imageBase
+                    editor.components.copyFileInfos = []
+                    editor.components.copyFileInfos.push(data)
+    
+                    pointsExplorerComponent.copyFileInfos = []
+                
+                    pointsExplorerComponent.copyFileInfos.push(data)
+    
+                    editor.copyFiles()
+                })
+                
+              
+            })
             
             
+        } , visible: function(){
+            var data = pointsExplorerComponent.list.sm().ld();
+            if(data) return true
+            return false
+
         }
     })
 
@@ -289,7 +347,7 @@ console.log('addNewFolderItem jsonTreeItem', editor.symbols)
 
 
                 // 组件 拖进 图纸 函数 
-                window.editor.$100$(fileNode,point)
+                window.editor.$98$(fileNode,point)
                 view.graphView.setFocus()
 
                 // pointsExplorerComponent.removeSelection()

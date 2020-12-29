@@ -20,19 +20,28 @@
         rootDir： 指向\instance-enjoy\storage 下的目录。
 
  */
-var rootDir = 'testdemo/测试'
+
+var rootDir = 'testdemo'
 var  TabDiyNmae = '自定义图标'
 var rootNodeName = '自定义图标根目录'
+
+
+
+// if (D.getFileNode(A)) return void gP(S("editor.filenameconflict"), A, function() {});
+// D.request("mkdir", A, function(P) {})
+
 // Used in config-handleEvent.js
 function createDiyTab(editor) {
 
 
+      
+    console.log('getFileNode(rootDir): ', ht) 
 
     let pointsTabDiy = new ht.Tab();
     pointsTabDiy.setName(TabDiyNmae);
-    editor.leftTopTabView.getTabModel().add(pointsTabDiy);
+    editor.leftTopTabView.getTabModel().add(pointsTabDiy, 1);
 
-    // console.log('editor.leftTopTabView.getTabModel():',pointsTabDiy.getView())
+    console.log('editor.leftTopTabView.getTabModel():',editor)
 
     pointsTabDiy.setView(createPointsExplorerDiy(editor, pointsTabDiy,true));
 
@@ -58,7 +67,7 @@ function createDiyTab(editor) {
  *  通过 parse 函数
  */
 function LoadFiles (pointsExplorerDiy){
-    
+  
     // pointsExplorerDiy.dataModel.clear()
     // 加载数据
     window.editor.request("explore", '/' +  rootDir, function(D) {
@@ -97,7 +106,7 @@ function createPointsExplorerDiy(editor,draggable) {
     let HTTPService = hteditor.HTTPService.prototype
     
    // 加载数据
-   LoadFiles(pointsExplorerDiy)
+//    LoadFiles(pointsExplorerDiy)
 
 
 
@@ -175,7 +184,7 @@ function createPointsExplorerDiy(editor,draggable) {
     *    当前点击 的文件，获取路径url
     */
 
-   pointsExplorerDiy.list.editable = false
+   pointsExplorerDiy.list.editable = true
 
    // 新建图标 事件
    pointsExplorerDiy.listMenuItems.push({
@@ -191,24 +200,60 @@ function createPointsExplorerDiy(editor,draggable) {
 
         }
     })
+    pointsExplorerDiy.addNewFolderItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
+
+    pointsExplorerDiy.addRenameItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
+ 
 
     // 拷贝
     pointsExplorerDiy.listMenuItems.push({
         id: "copySymbolDiy",
         label: '拷贝',
         action: function() {
-            // var data = pointsExplorerDiy.tree.sm().ld();
+            var data = pointsExplorerDiy.list.sm().ld();
             // console.log('新建图标',  data)
             //  修改图标路径
-            console.log('拷贝：', pointsExplorerDiy)
-          
-            if(pointsExplorerDiy.copyFileInfos.length > 0) {
-                editor.symbols.copyFileInfos = []
-                editor.symbols.copyFileInfos =  pointsExplorerDiy.copyFileInfos
-            }
-            editor.copyFiles()
+            console.log('拷贝：', data)
+            
+            let imgUrl =  data._image.split('?t')[0]
+            data._icon = imgUrl
+            data._image =  imgUrl
+            data.value.fileIcon =  imgUrl
+            data.image = true
+           
+
+            console.log('拷贝 symbols ：', editor.symbols.copyFileInfos)
+            console.log('拷贝 pointsExplorerDiy：', pointsExplorerDiy.copyFileInfos)
+            
+            editor.requestBase64(data.url,function(dataBase){
+                console.log('requestBase64' , dataBase)
+                data.content =  dataBase
+                data.name =  data._name
+
+                editor.requestBase64(imgUrl,function(imageBase){
+
+                    data.image  = imageBase
+                    editor.symbols.copyFileInfos = []
+                    editor.symbols.copyFileInfos.push(data)
+    
+                    pointsExplorerDiy.copyFileInfos = []
+                
+                    pointsExplorerDiy.copyFileInfos.push(data)
+    
+                    editor.copyFiles()
+                })
+                
+              
+            })
+            // editor.copyFiles()
             
             
+        },
+        visible: function(){
+            var data = pointsExplorerDiy.list.sm().ld();
+            if(data) return true
+            return false
+
         }
     })
 
@@ -217,13 +262,19 @@ function createPointsExplorerDiy(editor,draggable) {
         id: "pasteSymbolDiy",
         label: '粘贴',
         action: function() {
-            // var data = pointsExplorerDiy.tree.sm().ld();
+            var data = pointsExplorerDiy.tree.sm().ld();
             // console.log('新建图标',  data)
             //  修改图标路径
-            // console.log('拷贝：', pointsExplorerDiy)
+            console.log('粘贴', pointsExplorerDiy)
           
             pointsExplorerDiy.copyFileInfos =    editor.symbols.copyFileInfos
+
             editor.pasteFiles()
+           
+            // parentInfo
+            // console.log( pointsExplorerDiy.copyFileInfos[0])
+
+            // editor.pasteFileImpl(pointsExplorerDiy.copyFileInfos[0] )
             
             
         }
@@ -231,11 +282,10 @@ function createPointsExplorerDiy(editor,draggable) {
    
 
 //    pointsExplorerDiy.addLocateTreeFileItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
-   pointsExplorerDiy.addNewFolderItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
-   pointsExplorerDiy.addRenameItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
-   pointsExplorerDiy.addDeleteItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
+
+pointsExplorerDiy.addDeleteItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
 //    pointsExplorerDiy.addCopyItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
-   pointsExplorerDiy.addExportItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
+//    pointsExplorerDiy.addExportItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
 //    pointsExplorerDiy.addPasteItem( pointsExplorerDiy.listMenuItems, pointsExplorerDiy.list)
 
   
@@ -264,12 +314,20 @@ console.log('addNewFolderItem jsonTreeItem', editor.symbols)
         pointsExplorerDiy.list.handleDropToEditView = function(view, fileNode, point, event) {
             console.log(' pointsExplorerDiy.tree.sm() fileNode', fileNode,point)
             if(fileNode.fileType === 'symbol') {
-                var node = new ht.Node();
-                node.setImage(fileNode.url);
+
+
+
+                // 找 this.symbolView.addData(u) 
+                 // 组件 拖进 图纸 函数 
+                window.editor.$98$(fileNode,point)
+                view.graphView.setFocus()
+
+                // var node = new ht.Node();
+                // node.setImage(fileNode.url);
                 
-                node.p(point);
-                node.setDisplayName(fileNode.getName());
-                view.addData(node);
+                // node.p(point);
+                // node.setDisplayName(fileNode.getName());
+                // view.addData(node);
             }
 
             // if (fileNode.getIcon() === textIcon) {

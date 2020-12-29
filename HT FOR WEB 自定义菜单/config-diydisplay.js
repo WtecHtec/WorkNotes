@@ -39,7 +39,7 @@ function createDisplayTab(editor) {
 
     let pointsTabDisplay = new ht.Tab();
     pointsTabDisplay.setName(TabDiyNmaeDisplay);
-    editor.leftTopTabView.getTabModel().add(pointsTabDisplay);
+    editor.leftTopTabView.getTabModel().add(pointsTabDisplay, 0);
 
     console.log('editor.leftTopTabView.getTabModel():',editor)
 
@@ -210,18 +210,60 @@ pointsExplorerDisplay.tree.menu.addTo(pointsExplorerDisplay.tree.getView())
         id: "copyDisplayDiy",
         label: '拷贝',
         action: function() {
-            // var data = pointsExplorerDisplay.tree.sm().ld();
+          
             // console.log('新建图标',  data)
             //  修改图标路径
-            console.log('拷贝：', pointsExplorerDisplay)
+            // console.log('拷贝：', pointsExplorerDisplay)
           
-            if(pointsExplorerDisplay.copyFileInfos.length > 0) {
-                editor.displays.copyFileInfos = []
-                editor.displays.copyFileInfos =  pointsExplorerDisplay.copyFileInfos
-            }
-            editor.copyFiles()
+            // if(pointsExplorerDisplay.copyFileInfos.length > 0) {
+            //     editor.displays.copyFileInfos = []
+            //     editor.displays.copyFileInfos =  pointsExplorerDisplay.copyFileInfos
+            // }
+
+            var pastedata = pointsExplorerDisplay.tree.sm().ld();
+            var data = pointsExplorerDisplay.list.sm().ld();
+    
+            // console.log('新建图标',  data)
+            //  修改图标路径
+            console.log('拷贝：', data)
+            
+            let imgUrl =  data._image.split('?t')[0]
+            data._icon = imgUrl
+            data._image =  imgUrl
+            data.value.fileIcon =  imgUrl
+            data.image = true
+           
+
+            // console.log('拷贝 symbols ：', editor.symbols.copyFileInfos)
+            // console.log('拷贝 pointsExplorerDiy：', pointsExplorerDisplay.copyFileInfos)
+            
+            editor.requestBase64(data.url,function(dataBase){
+                console.log('requestBase64' , dataBase)
+                data.content =  dataBase
+                data.name =  data._name
+
+                editor.requestBase64(imgUrl,function(imageBase){
+
+                    data.image  = imageBase
+                    editor.displays.copyFileInfos = []
+                    editor.displays.copyFileInfos.push(data)
+    
+                    pointsExplorerDisplay.copyFileInfos = []
+                
+                    pointsExplorerDisplay.copyFileInfos.push(data)
+    
+                    editor.copyFiles()
+                })
+                
+              
+            })
             
             
+        } , visible: function(){
+            var data = pointsExplorerDisplay.list.sm().ld();
+            if(data) return true
+            return false
+
         }
     })
 
