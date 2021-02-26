@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MathJax TeX Test Page</title>
+<style type="text/css">
+	
+	#formula-main {
+		width: 100%;
+	}
+	
+	.input-div {
+	  min-width: 50px;
+	  /* height: 80px; */
+	  border: 1px dashed #0000FF;
+
+	  cursor: pointer;
+	 
+	  display: flex;
+	  width: 100%;
+	  flex-wrap: wrap;
+	}	
+	
+/* 	.input-div:hover {
+		background: #DDDDDD;
+	} */
+	
+	.input-value {
+		min-width: 50px;
+		height: 80px;
+	
+		display: inline-block;
+		cursor: pointer;
+		vertical-align: top;
+		
+		   display: flex;
+		    justify-content: center;
+		    align-items: center;
+	
+		
+	}
+	
+	
+	
+	.input-cursor-div {
+		min-width: 10px;
+		height: 80px;
+		display: inline-block;
+		cursor: pointer;
+		text-align: center;
+	
+	}
+	
+	.input-cursor-div:hover {
+		background: #0000FF;
+	}
+	
+	.input-cursor-active {
+		animation:cursorActive 1s infinite alternate;
+	
+		
+		}
+	@keyframes cursorActive{
+		0% {
+			opacity: 1;
+			background: blueviolet;
+		}
+		100% {
+			opacity: 0;
+			background: darkblue;
+		}
+	}
+	
+	
+	.input-bracket:before {
+		display: inline-block;
+		width: 5px;
+		content: '(';
+		vertical-align: top;
+	}
+	
+	.input-math-abs:before {
+		display: inline-block;
+		width: 80px;
+		content: 'Math.abs(';
+		vertical-align: top;
+	}
+	.input-math-pow:before {
+		display: inline-block;
+		width: 80px;
+		content: 'Math.pow(';
+		vertical-align: top;
+	}
+	
+	
+	.input-default-bracket:after {
+		display: inline-block;
+		width: 5px;
+		content: ')';
+		vertical-align: top;
+	}
+	
+	.drag-div {
+		position: absolute;
+		top: 0px;
+		left: 0px;
+		border: 1px solid #DDDDDD;
+		border-radius: 4px;
+		padding: 5px;
+		box-sizing: border-box;
+		background: #DDDDDD;
+		display: none;
+	}
+	
+	.value-opt {
+		display: flex;
+	}
+	.drag-item {
+		width: 150px;
+		 height: 80px; 
+		 background-color: antiquewhite;
+		 cursor: pointer;
+		 display: flex;
+		 justify-content: center;
+		 align-items: center;
+		 margin: 0px 10px;
+		 border: 1px solid #ccc;
+	}
+
+
+</style>
+</head>
+<body>
+	
+<div id="app">
+	
+	<div class="drag-div" id="drag-div">asdasdasd</div>
+	
+	
+		
+	当前公式： {{ funMessage }}
+	
+	<div id="formula-main">
+		<div class="input-div" data-type="variate" >
+			<div class="input-value input-bracket" data-type="bracket" >
+							<div class="input-cursor-div input-cursor-active"></div>
+			</div>
+			<div class="input-cursor-div"></div>
+			<div class="input-value" data-type="value" >x</div>
+			<div class="input-cursor-div"></div>
+			<div class="input-value" data-type="operator" >+</div>
+			<div class="input-cursor-div"></div>
+		</div>
+		 
+	</div>
+	
+	</br>
+	<div class="value-opt">
+		未知数: 
+			<template v-for="item in configData.valueDatas">
+				 <!-- <button type="button" @click="handleaddValue(item.type,item.value,item.domType,item.className)"> {{item.value }} </button> -->
+				<div  class="drag-item"  @click="handleaddValue(item.type,item.value,item.domType,item.className)" > {{item.value }}  </div>
+			</template>
+		
+	</div>
+	
+	</br>
+
+	
+	<div class="value-opt">
+	运算符号:
+		<template v-for="item in configData.operatorDatas">
+			 <!-- <button type="button" @click="handleaddValue(item.type,item.value,item.domType,item.className)"> {{item.value }} </button> -->
+			
+			<div  class="drag-item"  @click="handleaddValue(item.type,item.value,item.domType,item.className)" > {{item.value }}  </div>
+		</template>
+	
+	</div>
+	
+	</br>
+	
+	<div class="value-opt">
+		函数: 
+		<template v-for="item in configData.bracketDatas">
+			<div  class="drag-item"  @click="handleaddValue(item.type,item.value,item.domType,item.className,item.includeNum)" > {{item.value }}  </div>
+			<!-- <button type="button" @click="handleaddValue(item.type,item.value,item.domType,item.className,item.includeNum)"> {{item.value }} </button> -->
+		</template>
+	</div>
+	</br>
+	<div style="display: flex;">
+		<div class="drag-item"   style="background: #fff;" @click="handleDel()"> 删除</div>
+		<div class="drag-item"   style="background: #fff;" @click="handleTopo('init')"> 初始化</div>
+		<div class="drag-item" style="background: #fff;" @click="checkDomVerify()"> 检验</div>
+		<div class="drag-item"  style="background: #fff;" @click="handleTopo('get')"> 获取公式</div>
+	</div>
+	
+    </br>
+	 结果
+	 <div id="result" style="min-height: 100px;border: 1px solid #CCCCCC ; ">
+		 
+	 </div>
+	 
+</div>
+
+  <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+    <script type="text/javascript" src="./js/uuid.js"></script>
+    <script type="text/javascript" src="./js/data-tool.js"></script>
+    <script type="text/javascript" src="js/jquery-1.4.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script type="text/javascript">
+
+    var app = new Vue({
+      el: '#app',
+      data: {
+		  configData: {
+		  // 变量
+		  valueDatas: [
+			  {
+				  type:'value',
+				  domType:'X',
+				  className: 'input-value',
+				  value: 'X'
+			  },
+			  {
+					  type:'value',
+					  domType:'Y',
+					  className: 'input-value',
+					  value: 'Y'
+			  },
+			  {
+					  type:'value',
+					  domType:'N',
+					  className: 'input-value',
+					  value: 'N'
+			  },
+			  {
+					  type:'value',
+					  domType:'M',
+					  className: 'input-value',
+					  value: 'M'
+			  },
+		  ],
+		  // 运算符 （加减乘除余）
+		  operatorDatas:[
+			  {
+				  type:'operator',
+				  domType:'add',
+				  className: 'input-value',
+				  value: '+'
+			  },
+			  {
+				  type:'operator',
+				  domType:'subtract',
+				  className: 'input-value',
+				  value: '-'
+			  }, {
+				  type:'operator',
+				  domType:'multiply',
+				  className: 'input-value',
+				  value: '*'
+			  },{
+				  type:'operator',
+				  domType:'divide',
+				  className: 'input-value',
+				  value: '/'
+			  },
+			  {
+				  type:'operator',
+				  domType:'surplus',
+				  className: 'input-value',
+				  value: '%'
+			  },
+		  ],
+		// 括号，函数 包含
+		bracketDatas:[
+			{
+				type: 'bracket',
+				domType:'bracket',
+				value: '(...)',
+				className: 'input-value input-default-bracket input-bracket'
+			},
+			{
+				type: 'bracket',
+				domType:'math_abs',
+				value: 'Math.abs(x)',
+				className: 'input-value input-default-bracket input-math-abs',
+				includeNum: 1
+			},
+			{
+				type: 'bracket',
+				domType:'math_pow',
+				value: 'Math.pow(x,y)',
+				className: 'input-value input-default-bracket input-math-pow',
+				includeNum: 2
+			},
+			
+		]
+		},
+		cursorDom:null, // 当前光标
+        funMessage: 'Hello Vue!',
+		// 显示数据的数组 , 可存数据
+		topoDataArry:[
+			{	
+				domid: "7138db29-896c-42da-8e0f-0dbc3a3299ef",
+				type: 'variate',
+				domType:'variate',
+				value: '',
+				className: 'input-div'
+				
+			},
+			
+			{
+				domid: "aa447ece-1b03-42cc-9199-adc924ea7271",
+				type: 'value',
+				domType:'value',
+				value: 'x',
+				parentId: "7138db29-896c-42da-8e0f-0dbc3a3299ef",
+				className: 'input-value'
+			},
+			{
+				domid: "07872aaf-0bb0-4f7e-9b40-ef78b6e95ed1",
+				type: 'operator',
+				domType:'operator',
+				value: '+',
+				parentId: "7138db29-896c-42da-8e0f-0dbc3a3299ef",
+				className: 'input-value'
+			},
+			{
+				domid: "07872aaf-0bb0-4f7e-9b40-ef78b6e95ed3",
+				type: 'bracket',
+				domType:'bracket',
+				value: '',
+				parentId: "7138db29-896c-42da-8e0f-0dbc3a3299ef",
+				className: 'input-value input-bracket input-default-bracket'
+			},
+			{
+				domid: "07872aaf-0bb0-4f7e-9b40-ef78b6e95ed4",
+				type: 'value',
+				domType:'value',
+				value: 'n',
+				parentId: "07872aaf-0bb0-4f7e-9b40-ef78b6e95ed3",
+				className: 'input-value'
+			},
+			
+			
+			
+			
+		],
+		// 显示数据的树结构，用于递归，页面显示，此数据由topoDataArry转换
+	    topoData:[
+			{
+				domid:UUID.generate(),
+				type: 'variate',
+				domType:'variate',
+				components:[
+					{
+						domid:UUID.generate(),
+						type: 'value',
+						value: 'x',
+						domType: 'value'
+					},
+					{
+						domid:UUID.generate(),
+						type: 'operator',
+						value: '+',
+						domType: 'operator'
+					},
+					
+				]
+			}
+		],
+		// 当前拖拽元素
+		currentDragDom:  null
+      },
+	  mounted(){
+		   this.init()
+		   this.funMessage = this.getFormulaStr( this.topoData)
+		   this.cursorDom = $('.input-cursor-div:last')
+		   this.cursorDom.addClass('input-cursor-active')
+		   
+		   this.handleDrag()
+		   
+	  },
+	  methods:{
+		  handleaddValue(type,value,domtype,className,includeNum){
+			  this.addValue(type,value,domtype,className,includeNum)
+			  
+			  this.topoData =  dataToTree(deepCopy(this.topoDataArry) ,'domid','parentId')
+			  console.log('当前树数据', this.topoData)
+			  this.funMessage = this.getFormulaStr( this.topoData)
+		  },
+		 
+		 handleDel(){
+			this.delValue() 
+			
+			this.topoData =  dataToTree(deepCopy(this.topoDataArry) ,'domid','parentId')
+			console.log('当前树数据', this.topoData)
+			this.funMessage = this.getFormulaStr( this.topoData)
+		 }, 
+		  // 初始化 ，获取公式
+		  handleTopo(type) {
+			   // 初始化
+			  if (type === 'init') {
+				   this.topoDataArry = [
+						{
+						  	domid:  UUID.generate(),
+						  	type: 'variate',
+						  	domType:'variate',
+							value: '',
+							className: 'input-div'
+						}
+				    ]
+				
+				  this.init()
+				  this.cursorDom = $('.input-cursor-div:first')
+				  this.cursorDom.addClass('input-cursor-active')
+				  
+			  } else if (type === 'get') {
+				  console.log('当前数据', this.topoDataArry)
+				    this.topoData =  dataToTree(deepCopy(this.topoDataArry) ,'domid','parentId')
+					console.log('当前树数据', this.topoData)
+					let fstr = this.getFormulaStr( this.topoData)
+					console.log('当前公式', fstr)
+					$('#result').html('当前公式:  ' + fstr)
+			  }
+			  
+			  
+		  },
+		  
+		  // 获取 公式
+		  		  getFormulaStr(topoData,isVerify,parentItem){
+		  			  let str = ''
+		  			  for (let i = 0; i < topoData.length; i++) { 
+		  				  if (topoData[i].type === 'bracket'  ) {
+		  					  if (topoData[i].components) {
+								  let lastStr = ' )'
+		  						 str += topoData[i].value.split('(')[0]
+		  						 str += '( '
+								 if (parentItem &&  parentItem['includeNum'] >= 2 && i < topoData.length - 1 ) {
+								 				lastStr += ','					 
+								 }
+		  						 str +=  this.getFormulaStr(topoData[i].components, isVerify,topoData[i]) + lastStr
+								 
+		  					  } else {
+		  						str +=  topoData[i].value
+		  					  }
+		  				  } else if (topoData[i].components){ 
+		  					  str +=  this.getFormulaStr(topoData[i].components, isVerify)
+		  				  } else  {
+		  					  if (isVerify && topoData[i].type === 'value') {
+		  						  str +=  1
+		  					  } else {
+		  						  str +=  topoData[i].value
+		  					  }
+							  
+		  					  if (parentItem) {
+		  						 if ( 
+								  topoData[i].type !== 'operator' 
+		  						  && parentItem['includeNum'] >= 2 
+								  && i < parentItem['includeNum'] - 1  ) {
+		  						  		str += ','
+		  						  }
+		  					  }
+		  					   
+		  						
+		  					   
+		  				  }  
+		  			  }
+		  			  return str
+		  			  
+		  			
+		  		  },
+		  		 // 检查公式是否错误
+		  		  checkDomVerify(){
+		  			    this.topoData =  dataToTree(deepCopy(this.topoDataArry) ,'domid','parentId')
+		  			  let fstr = this.getFormulaStr( this.topoData,true)
+		  		
+		  			  
+		  			  let len = this.topoDataArry.length
+					  
+		  			  if ( this.topoDataArry[1].type === 'operator'
+					   ||  this.topoDataArry[len - 1].type !== 'value') {
+		  				   // 开头是操作符，结尾不是数值
+						  alert('公式语法错误')
+						
+		  				  return false
+		  			  }
+		  			  for(let i = 0 ; i < len - 1; i++) {
+						  
+						  if (this.topoDataArry[i].type === 'bracket'
+						  && this.topoDataArry[i]['includeNum'] >= 2) {
+								  // 函数需要大于等于 2 个参数，如果子级不等于参数个数
+								  let num = this.topoDataArry.filter((item)=>{
+									  return item.parentId ===  this.topoDataArry[i].domid
+								  })
+								  if (num.length !== this.topoDataArry[i]['includeNum']) {
+									  alert(this.topoDataArry[i].value + '参数有错（复杂参数可用括号）')
+									  return false
+								  }
+						  } else {
+							  
+	                           let parentItem = this.topoDataArry.find((item)=>{
+								   return item.domid === this.topoDataArry[i].parentId
+							   })
+							   let includeNum = -1
+							   
+							   if(parentItem) {
+									includeNum =  parentItem['includeNum']
+							   }
+							   if (includeNum >= 2) {
+								   
+							   } else {
+									if (  this.topoDataArry[i].domType !== 'bracket'
+									    && this.topoDataArry[i].type === this.topoDataArry[i + 1].type) {
+											  alert('公式语法错误： 相同类型操作不能相邻')
+											  return false
+									}
+							   }
+							  
+							 
+							  
+							  if (
+							  this.topoDataArry[i].type === 'bracket'
+							  	&&  this.topoDataArry[i + 1].type === 'operator'
+							  ) {
+								  alert('公式语法错误： ' + this.topoDataArry[i].value + '不能使用运算符开头' )
+								  return false
+							  }
+						  }
+						  
+						 
+						   
+		  				  
+		  			  }
+					  try{
+					  	let relNum =  eval(fstr)
+						console.log(relNum)
+					  	if (Number.isNaN(relNum)) {
+							  alert('公式语法错误')
+							  return false
+					  	}
+					  }catch(e){
+					  	//TODO handle the exception
+						alert('公式语法错误')
+						return false
+					  }
+					 
+		  			  return true
+		  			 
+		  		  },
+				  // 拖拽逻辑
+				  handleDrag(){
+				  			  
+				  			  $(document).mousemove((event)=>{
+				  			  			    if (this.currentDragDom) {
+				  			  					// console.log(event.clientX)
+				  			  					$('#drag-div').css({
+				  			  						'top': event.clientY + 'px',
+				  			  						'left':  event.clientX + 10 + 'px'
+				  			  					}).html(this.currentDragDom.innerText)
+				  			  				}
+				  			  			  
+				  			  })
+				  			  .mouseup((event)=>{
+				  			  			    if (this.currentDragDom) {
+				  			  					this.currentDragDom  = null
+				  			  					$('body').css('cursor','unset')
+				  			  					 $('#drag-div').hide()
+				  			  				}
+				  			  			     
+				  			  })
+				  			  $('.value-opt').mousedown(
+				  			  			   (event)=>{
+				  			  				   event.preventDefault()
+				  			  				   console.log('点击', event)
+				  			  				    this.currentDragDom = event.target
+				  			  					setTimeout(()=>{
+				  			  						if (this.currentDragDom) {
+				  			  							$('body').css('cursor','pointer')
+														$('#drag-div').css({
+															'top': event.clientY + 'px',
+															'left':  event.clientX + 10 + 'px'
+														}).html(this.currentDragDom.innerText).show()
+				  			  						} else {
+				  			  							$('body').css('cursor','unset')
+				  			  						}
+				  			  					}, 1000) 
+				  			  				  
+				  			  				   
+				  			  			   }
+				  			  ).mouseup((event)=>{
+								   console.log(event)
+								   this.currentDragDom  = null
+								   $('body').css('cursor','unset')
+								   $('#drag-div').hide()
+				  			  })
+				  			  
+				  			  $('#formula-main').mouseup((event)=>{
+				  			  			   console.log(event)
+				  			  			   let targetDom = $(event.target)
+				  			  			   if (targetDom.attr('data-type') === 'cursor' && this.currentDragDom) {
+				  			  				   this.cursorDom =  targetDom
+				  			  				   this.currentDragDom.click()
+				  			  				   
+				  			  				   $('body').css('cursor','unset')
+				  			  				   $('#drag-div').hide()
+				  			  				   this.currentDragDom  = null
+				  			  			   }
+				  			  			  
+				  			  })
+				  },
+		  // 删除逻辑
+		  delValue(){
+			if ( $('.input-cursor-active').length === 0 || this.topoDataArry.length <= 1) return
+			let currentDom = this.cursorDom
+			let cursorDataDoms = $('.input-cursor-div'), 
+				cursorIndex = null,
+				total = this.topoDataArry.length,
+				curentDelDom = null,
+				delIndexType = ''
+				
+			for (let i = 0; i <  cursorDataDoms.length; i++) {
+			  if (cursorDataDoms[i] === currentDom[0] ) cursorIndex = i 
+			}
+			// 第一个节点，不删除
+			if (cursorIndex === 0) return
+		
+			// console.log('handleDel:', cursorIndex)
+			  
+			let currentDombeforeId = currentDom.attr('before-domid'),
+				parentid =   currentDom.attr('data-parentid') 
+				
+			if (currentDombeforeId) {
+				
+				//  删除当前元素，并且获取删除当前元素
+				for (let i = 0; i < this.topoDataArry.length ; i++) {
+					if (this.topoDataArry[i].domid === currentDombeforeId) {
+						this.topoDataArry.splice(i, 1)
+						curentDelDom = this.topoDataArry[i - 1]
+						break
+					}
+				}
+				
+				
+				// 判断删除元素所有的子级
+				this.topoDataArry = this.topoDataArry.filter((item)=>{
+					return item['parentId'] !== currentDombeforeId
+				})
+				
+				// 判断删除元素是否存在某个域，如果域没有值，直接把域删除
+				if (this.topoDataArry.length > 1) {
+						let index = this.topoDataArry.findIndex((item)=>{
+							return item.type !== 'variate' &&  item['parentId'] === parentid
+						}) 
+						if (index === -1) {
+							
+							let len = this.topoDataArry.length
+							
+							for (let i = 0 ; i < this.topoDataArry.length;i++){
+								if (this.topoDataArry[i].domid === parentid) {
+									curentDelDom = this.topoDataArry[i - 1]
+									this.topoDataArry.splice(i, 1)
+									break
+								}
+							}
+							
+						}
+				}
+				
+				
+				// console.log(this.topoDataArry)
+				
+				$('#formula-main').html('')
+				//  this.topoData =  dataToTree(deepCopy(this.topoDataArry) ,'domid','parentId')
+				this.init()
+				
+				if (this.topoDataArry.length === 1 || currentDom.attr('data-ending') === 'end' ) {
+					delIndexType = 'last'
+				} else if (curentDelDom.domid === this.topoDataArry[0].domid) {
+					delIndexType = 'start'
+				}
+				
+				// console.log('位置', delIndexType, curentDelDom)
+				
+				// 最后一个删除节点
+				if ( delIndexType === 'last') {
+					this.cursorDom = $('.input-cursor-div:last')
+				} else if (delIndexType === 'start'){
+					this.cursorDom = $('.input-cursor-div:first')
+				}  else if (curentDelDom.domType === 'bracket'){
+					this.cursorDom = $(`.input-cursor-div[before-domid="${curentDelDom.domid}"][data-parentid="${curentDelDom.domid}"]`)
+				}
+				 else {
+					this.cursorDom = $(`.input-cursor-div[before-domid="${curentDelDom.domid}"][data-parentid="${curentDelDom.parentId}"]`)
+				}
+				this.cursorDom.addClass('input-cursor-active')
+				
+			 }
+			 
+		  },
+		  
+		 
+		 /** 添加一个组件
+		  * @param {Object} type  组件类型 
+		  * @param {Object} value 值
+		  * @param {Object} domtype 前端DOM显示类型
+		  */
+		  addValue(type,value,domtype,className,includeNum){
+			  if ( $('.input-cursor-active').length === 0) return
+			  
+			  let currentDom = this.cursorDom,
+			    currentDombeforeId = currentDom.attr('before-domid'), 
+				currentLaterId = currentDom.attr('later-domid'),
+				currentParentId =  currentDom.attr('data-parentid'),
+				domId = UUID.generate(),
+				findItemDomId = currentDombeforeId,
+				parentId = '',
+				noDataType = '',
+				topoDataIndex =-1
+		
+				
+			
+			  // 一个都没有 、最后一个位置
+			  if (this.topoDataArry.length === 1 ||
+			      currentDom.attr('data-ending') === 'end' ) {
+				  parentId = this.topoDataArry[0].domid 
+				  noDataType =  'laster'
+			  } else if (currentParentId === this.topoDataArry[0].domid && !currentDombeforeId){
+				  // 第一个位置
+				  noDataType = 'start'
+				  parentId = this.topoDataArry[0].domid 
+				  
+			  } else {
+				 
+				  topoDataIndex = this.topoDataArry.findIndex((item)=>{
+						return  item.domid ===  findItemDomId
+				  })
+				  
+				if (topoDataIndex == -1 && this.topoDataArry.length > 1) {
+					  alert('数据错误')
+					  return 
+				}
+				parentId  =  currentParentId
+			  }
+			  
+			  let topoData = {
+				  domid: domId,
+				  type: type,
+				  domType: domtype,
+				  value: value,
+				  parentId : parentId,
+				  className:className,
+				  includeNum:includeNum
+			   }
+
+			  if (noDataType === 'laster') {
+				this.topoDataArry.push(topoData)
+			  } else if (noDataType === 'start'){
+				  this.topoDataArry.splice(1,0,topoData)
+			  } else {
+				this.topoDataArry.splice(topoDataIndex + 1,0,topoData)
+			  }
+			  
+			  // console.log('更新数据', this.topoDataArry)
+			
+			  this.init()
+			  
+			  
+			
+			  if (noDataType === 'laster' ) {
+				    //  最后一个位置
+				  this.cursorDom =  $('.input-cursor-div:last')
+			  } else  {
+				  this.cursorDom = $(`.input-cursor-div[data-parentid="${parentId}"][before-domid="${domId}"]`)
+			  }
+			
+			
+			  this.cursorDom.addClass('input-cursor-active')
+			 
+			  
+			  // currentDom.before(domStr)
+		  },
+		  // 初始化
+		  init(){
+			  this.topoData =   this.topoData =  dataToTree(deepCopy(this.topoDataArry) ,'domid','parentId')
+			 let domStr = this.setFormulaMainDOM(this.topoData , null, null, true)
+		
+			
+			  // console.log(domStr)
+			 $('#formula-main').html(domStr).click((event)=>{
+				 console.log('点击事件', $(event.target).attr('dom-id'))
+				 let targetDom =  $(event.target),
+				    domId = targetDom.attr('dom-id'),
+				 	domType = targetDom.attr('data-type')
+					
+				if ( domType === 'cursor') {
+					$('.input-cursor-active').removeClass('input-cursor-active')
+					
+					targetDom.addClass('input-cursor-active')
+					this.cursorDom = targetDom
+				}
+				 
+			
+				 
+			 })
+			 
+			 
+		  },
+		  // 设置光标DOM
+		  getInputCursor(dataEnding,beforeDomId,laterDomId,dataParentId){
+			  return `
+				<div data-type="cursor"
+					data-ending="${dataEnding}"
+					class="input-cursor-div "
+					before-domid="${beforeDomId}"
+					later-domid="${laterDomId}"  
+					data-parentid="${dataParentId}" >
+			   </div>
+			  `
+		  },
+		  
+		  // 设置区域级DOM
+		  getInputArea(className,dataType, domId, dataParentId){
+			return  ` 
+				<div class="${className}"
+					data-type="${dataType}"
+					dom-id="${domId}"    
+					data-parentid="${dataParentId}" >` 
+		  },
+		  
+		  // 设置操作符，变量Dom
+		  getInputValueOpt(className,dataType, domId, dataParentId,value){
+		  		return  `
+					 <div class="${className}"
+						data-type="${dataType}"
+						dom-id="${domId}"    
+						data-parentid="${dataParentId}"> 
+						${value} 
+					 </div>` 
+		  },
+		  // 设置局部区域添加光标逻辑
+		  getInputAreaCursor(i,lasterDom,domData,beforeId,parentId,parentDomType){
+			   console.log('getInputAreaCursor:' , lasterDom)
+			  let domLaster =  ''
+	
+			  if ( i !== domData.length - 1 ) {
+			 			 					 
+			    domLaster =  '</div>'
+			    domLaster +=   this.getInputCursor('',beforeId,domData[i + 1].domid,parentId)
+			  					
+			  							
+			  } else if ( parentDomType === 'bracket') {
+			  	 let laterId = i !== domData.length - 1?domData[i + 1].domid :''
+			  	 domLaster ='</div>' 
+			  	 domLaster += this.getInputCursor('',domData[i].domid, laterId,parentId)
+			  } else {
+				  console.log('最后一个')
+			  	 domLaster = '</div>' 
+			  }
+			  // console.log('getInputAreaCursor:' , domLaster)
+			  return domLaster
+		  },
+	
+		  
+		  // 渲染 页面
+		  setFormulaMainDOM(domData,beforeparam,laterparam, resizeparam, parentId,parentDomType){
+			  
+			  let  domStr = '', beforeId = beforeparam, later = '', resize = resizeparam
+			   
+			  for (let i = 0; i < domData.length; i++){
+					if (!resize) {
+						beforeId = domData[i].domid
+					}
+					later  = i < domData.length - 1? domData[i + 1].domid : ''
+					
+					if (laterparam) {
+						later =  laterparam
+						laterparam = ''
+					} 
+					resize = false
+					
+				  if (domData[i].type === 'variate') {
+					  /**
+					   *  公式总区域
+					   */
+					 if (domData[i].components && domData[i].components.length > 0) { 
+						later =   domData[i].components[0].domid
+					 }
+					beforeId = ''
+					domStr +=  this.getInputArea(domData[i].className,domData[i].type,domData[i].domid,'')
+					domStr += this.getInputCursor('',beforeId,later,domData[i].domid)
+					
+				  }  else if (domData[i].type === 'bracket'){
+					  /**
+					   *  局部区域级别
+					   */
+					  if (domData[i].components && domData[i].components.length > 0) {
+					  	 later =  domData[i].components[0].domid
+					  } 
+					  beforeId =  domData[i].domid
+					  domStr +=  this.getInputArea(domData[i].className,domData[i].type,domData[i].domid,parentId)
+					  domStr += this.getInputCursor('',beforeId,later,domData[i].domid)
+					  
+				  } else  {
+					    /**
+						  *  变量，操作符
+						*/
+						beforeId =  domData[i].domid
+						domStr += this.getInputValueOpt(domData[i].className,domData[i].type,domData[i].domid,parentId,domData[i].value)
+				  } 
+				
+				  if (
+					( 
+						(i === domData.length - 1 && parentDomType !== 'variate')
+						|| i < domData.length - 1 
+					) 
+				    &&  domData[i].type !== 'variate'
+				    &&  domData[i].type !== 'bracket'   ) {
+						 /**
+						  *  当前元素 操作符 或者 变量 时，加上光标
+						  * 
+						  * */
+						domStr += this.getInputCursor('',beforeId,later,parentId) 
+				  } 
+				
+				  if (domData[i].components && domData[i].components.length > 0) {
+					  /**
+					   *  区域子级 显示
+					   */
+					 later =  domData[i].components.length > 1?  domData[i].components[1].domid : null
+					 let domLaster = ''
+					 
+					 if (domData[i].type === 'variate') {
+						  // 总区域
+						  beforeId = domData[i].components[domData[i].components.length - 1].domid
+						  domLaster += this.getInputCursor('end',beforeId,'',domData[i].domid)
+						  domLaster += '</div>'
+						  
+					 } else if (domData[i].type === 'bracket') {
+						 // 局部区域 （括号）
+						 domLaster = ''
+						 beforeId = domData[i].domid
+						 domLaster = this.getInputAreaCursor(i,domLaster,domData,beforeId,parentId,parentDomType)
+					 }
+					 
+					 domStr +=  this.setFormulaMainDOM(domData[i].components, beforeId,later, true,  domData[i].domid, domData[i].type ) +   domLaster
+				  
+				  } else if ( domData[i].type === 'bracket'){
+					   domStr += ``
+					   beforeId = domData[i].domid
+					   let domlLater = 'asd '
+					   domlLater = this.getInputAreaCursor(i,domlLater,domData,beforeId,parentId,parentDomType)
+						domStr +=  domlLater
+				  } else if (domData[i].type === 'variate' ) {
+					   domStr += `</div>`
+				  }
+				  
+			  }
+			  // console.log(domData)
+			 
+			 return domStr
+		  }
+	  }
+    })
+  </script>
+</body>
+</html>

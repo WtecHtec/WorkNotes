@@ -10,3 +10,4 @@
 8. echartBmap echart百度地图 飞线图
 9. HT FOR WEB 自定义菜单
 10. Color 计算颜色的互补、辅助色。
+11. vue+jquery数学公式编辑。
