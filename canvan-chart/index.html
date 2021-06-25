@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+	</head>
+	<body>
+		
+		<canvas id="canvas" width="435" height="300"></canvas>
+		<script src="js/scalelinear.js"></script>
+		<script src="js/drawutil.js"></script>
+		<script>
+			const canvas = document.getElementById('canvas')
+			const  ctx = canvas.getContext('2d')
+			let w = canvas.width
+			let h = canvas.height
+			
+			let grid = {
+				top: 10,
+				left: 40,
+				bottom: 10,
+				right: 10
+			}
+			let ticks = 6
+			//定义一个数组
+			const dataset = [10, 20, 30, 40, 33, 24, 12, 5];
+			let maxVal = Math.max(...dataset)
+			console.log(maxVal)
+			
+			var yScale = new MyScaleLinear()
+							.domain([0, maxVal])
+							.range([h - grid.top - grid.bottom, grid.top ])
+							
+			var xScale = new MyScaleLinear()
+							.domain([0, dataset.length])
+							.range([grid.left, w - grid.left - grid.right])
+							
+			var drawutil = new  DrawUtil(ctx)	
+			
+			drawutil.drawLineHorizontal(grid.top, h - grid.bottom - grid.top,0, grid.left)
+			
+			for(let i = 0; i < ticks; i++) {
+				console.log('值：',maxVal/ticks*i)
+				drawutil.drawLineVertical(grid.left - 5, grid.left, yScale(maxVal/ticks*i) ,0 )
+			}
+			
+			
+			drawutil.drawLineVertical(grid.left, w - grid.left -grid.right,  h - grid.bottom - grid.top,0 )
+							
+		</script>
+	</body>
+</html>
