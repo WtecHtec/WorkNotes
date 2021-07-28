@@ -1,9 +1,10 @@
 {
   "pages": [
+
     "pages/perviewimg/index",
     "pages/index/index",
-   
-    
+  
+ 
     "pages/logs/logs"
     
   ],

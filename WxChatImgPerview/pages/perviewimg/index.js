@@ -9,25 +9,13 @@ Page({
     matrix: '',
     height: 500,
     width: 375,
-    startLeft: 0,
-    endLeft: 0,
-    scrollLeft: 0,
+    imgH: 240,
+    imgW: 320,
+    contentH: '100%',
+    contentW: '100%',
+    isScale: false,
+    scaleNum: 4,
     imgs: IMG_ULRS,
-    datas: [ {
-      v: 'A',
-      c: 'red',
-      d: '萨达萨达萨达倒萨倒萨大大'
-    },
-    {
-      v: 'B',
-      c: 'gree',
-      d: '萨达萨达萨达倒萨asdasdsd  撒旦撒旦倒萨大大'
-    },
-    {
-      v: 'C',
-      c: 'blue',
-      d: '萨达萨达萨达adasdas撒旦撒旦倒萨倒萨大大'
-    }]
   },
 
   /**
@@ -36,8 +24,8 @@ Page({
   onLoad: function (options) {
     try {
       const res = wx.getSystemInfoSync()
-      // console.log(res.windowWidth)
-      // console.log(res.windowHeight)
+      console.log(res.windowWidth - 240)
+      console.log(res.windowHeight - 320)
       this.setData({
         height: res.windowHeight,
         width: res.windowWidth,
@@ -76,12 +64,16 @@ Page({
 
   },
   bindTap(e){
+    let {scaleNum, imgH, imgW, contentH, contentW, height, width} = this.data;
     let tMatrix = Array(6).fill(0)
-    tMatrix[0] = 4;
-    tMatrix[3] = 4;
+    tMatrix[0] = scaleNum;
+    tMatrix[3] = scaleNum;
     var temp = tMatrix.join(",");
     this.setData({
+      isScale: true,
       matrix: temp,
+      contentH: imgH * scaleNum +  width - imgW,
+      contentW: imgW * scaleNum +  width - imgW,
     });
     console.log('bindTap', temp)
   }

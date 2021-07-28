@@ -9,8 +9,9 @@
          bindscroll="bindScroll" binddragstart="bindDragStart" binddragend="bindDragEnd">
         <block wx:for="{{imgs}}" wx:key="index">
           <view  class="scroll-view-item_H" bindtap="bindTap"> 
-            <view class="view-content">
-              <view style="transform:matrix({{matrix}});">
+            <view class="view-content" 
+            style="width:{{ isScale? contentW +'Px' :'100%' }};height:{{isScale? contentH +'Px' :'100%'}};">
+              <view style="transform:matrix({{matrix}});display: flex;">
                 <image src="{{item.src}}" mode="scaleToFill" ></image>
               </view>
             </view>
