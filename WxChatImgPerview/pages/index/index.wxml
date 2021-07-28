@@ -1,0 +1,5 @@
+  
+<!--index.wxml-->
+<view class="container" style="width:100%;height:100%;padding:0px">
+  <picviewbox id="picviewbox" style="width:100%;height:100%" imgsrc="/static/pics/001.jpg"></picviewbox>
+</view>

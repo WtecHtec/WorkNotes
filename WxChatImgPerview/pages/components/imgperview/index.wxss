@@ -1,0 +1,36 @@
+/* components/picviewbox/index.wxss */
+.content {
+  height: 100%;
+  font-size: 0;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  color: transparent;
+}
+
+.images image {
+  text-align: center;
+  position: absolute;
+}
+
+.images{
+
+  transition: transform 1s;
+}
+
+
+.img-normal{
+  transform:rotate(0deg);
+  transition: transform 1s,height 0.5s, width 0.5s;
+}
+
+.img-rotate{
+  transform:rotate(90deg);
+  transition: transform 1s,height 0.5s, width 0.5s;
+}
+
+page{
+  height: 100%;
+}

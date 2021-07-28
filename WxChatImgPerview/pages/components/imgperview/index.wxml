@@ -1,0 +1,8 @@
+<!--components/picviewbox/index.wxml-->
+<view class='content' style="display:flex;align-items:center; justify-content:center">
+  <scroll-view class='images' scroll-y="true" scroll-x="true" scroll-left="{{scrollleft}}" 
+  style="width:90%;height:80%;">
+    <image class="{{rotateClass}}" mode='aspectFill' binderror="errImg" src="{{dataimg}}"  
+    style="width:{{scaleWidth}};height:{{scaleHeight}};" bindload="imgload" bindtouchmove="touchmoveCallback" bindtouchstart="touchstartCallback"></image>
+  </scroll-view>
+</view>
