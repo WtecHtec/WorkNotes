@@ -17,3 +17,10 @@
 .usermotto {
   margin-top: 200px;
 }
+
+.scroll-view_desc {
+  position: absolute;
+  top: 0;
+  left: 0;
+ 
+}

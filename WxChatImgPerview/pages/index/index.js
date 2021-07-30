@@ -1,18 +1,30 @@
 //index.js
 //获取应用实例
 const app = getApp()
-
+// components/picviewbox/index.js
+import { IMG_ULRS } from '../perviewimg/config'
 Page({
   data: {
+    previewData:  IMG_ULRS,
     motto: 'Hello World',
     userInfo: {},
-    hasUserInfo: false,
+    isShowPVbox: false,
     canIUse: wx.canIUse('button.open-type.getUserInfo')
   },
   //事件处理函数
   bindViewTap: function() {
     wx.navigateTo({
       url: '../logs/logs'
+    })
+  },
+  bindPV(){
+    this.setData({
+      isShowPVbox: true
+    })
+  },
+  bindPvClose(){
+    this.setData({
+      isShowPVbox: false
     })
   },
   onLoad: function () {

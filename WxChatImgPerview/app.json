@@ -1,8 +1,8 @@
 {
   "pages": [
-
-    "pages/perviewimg/index",
     "pages/index/index",
+  
+    "pages/perviewimg/index",
   
  
     "pages/logs/logs"

@@ -1,12 +1,10 @@
 <view class="container">
-  <view class="page-top">
-    1/6
-  </view>
+  <view class="page-top"> {{currentIndex}}/{{previewData.length}}</view>
   <view class="page-body">
     <scroll-view class="scroll-view_H scroll-img-main"  enhanced="{{true}}" scroll-with-animation="{{true}}" paging-enabled="{{true}}"
         scroll-x="{{isScorll}}"  style="width: 100%;height:100%;" 
         binddragend="bindDragEnd"  bindscroll="bindScroll" bindtouchend="bindTouchEnd">
-        <block wx:for="{{imgs}}" wx:key="index">
+        <block wx:for="{{showData}}" wx:key="index">
         <view class="main-content"> 
 
           <!-- <view  class="scroll-view-item_H" > 
@@ -21,9 +19,10 @@
          <scroll-view class="scroll-view-item_H " scroll-x="true" scroll-y="true" style="width:{{width}}Px ;height:{{height}}Px;" 
           scroll-left="{{perviewLeft}}"
           bindscrolltoupper="bindScrollViewToupper" bindscrolltolower="bindScrollViewTolower">
-
+          <!--  -->
            <view class="view-content {{ item.isScale ? 'view-item-scale' : ''}}"  
-            style="width:{{ item.isScale? contentW +'Px' :'100%' }};height:{{item.isScale? contentH +'Px' :'100%'}};"  bindtap="handleDayClick" >
+           style="width:{{ item.isScale? contentW +'Px' :'100%' }};height:{{item.isScale? contentH +'Px' :'100%'}};" 
+            bindtap="handleDayClick" >
               <view data-index="{{index}}" catchtap="handleDayClick"  data-item="{{item}}"  
                 style="transform:matrix({{item.matrix}});display: flex;" bindtouchmove="touchmoveCallback" bindtouchstart="touchstartCallback" >
                 <image src="{{item.src}}" mode="scaleToFill"   ></image>

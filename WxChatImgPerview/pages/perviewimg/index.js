@@ -23,7 +23,7 @@ Page({
     scrollLeft: 0,
     scaleIndex: -1,
 
-    imgs: IMG_ULRS,
+    previewData: IMG_ULRS,
     timeer: null,
     scrollIng: false,
     startScorllLeft: 0,
@@ -31,6 +31,9 @@ Page({
     isScorll: true,
 
     distance: 0,//手指移动的距离
+
+    currentIndex: 1,
+    showData: [],
     
   },
 
@@ -42,9 +45,11 @@ Page({
       const res = wx.getSystemInfoSync()
       // console.log(res.windowWidth - 240)
       // console.log(res.windowHeight - 320)
+      let { previewData } = this.data;
       this.setData({
         height: res.windowHeight,
         width: res.windowWidth,
+        showData: previewData.length > 4 ? previewData.slice(0, 4) : previewData,
       })
     } catch (e) {
       // Do something when catch error
@@ -55,8 +60,8 @@ Page({
     // let {offsetLeft,offsetTop } = e.currentTarget
     let {x} = e.detail;
     let { index, item } = e.currentTarget.dataset
-    let {imgs, scaleNum,imgH, imgW, width, height, contentH, contentW, isScale, marginTop} = this.data
-    let imgItem = `imgs[${index}]`
+    let {previewData, scaleNum,imgH, imgW, width, height, contentH, contentW, isScale, marginTop} = this.data
+    let imgItem = `showData[${index}]`
     let tMatrix = Array(6).fill(0)
     EventObj.bindEvent(e, (type, event)=>{
       // console.log(type, e)
@@ -64,23 +69,25 @@ Page({
       tMatrix[3] = scaleNum;
       if (type === 'double_tap') {
         if (item.isScale) {
-          this._initScale(item, index, imgs)
+          this._initScale(item, index, previewData)
           return
         }
         this.data.scaleIndex = index
-        imgs[index].matrix = tMatrix
-        imgs[index].isScale = true
-        contentH =  imgH * scaleNum
+        // previewData[index].matrix = tMatrix
+        // previewData[index].isScale = true
+        item.matrix = tMatrix
+        item.isScale = true
+        contentH =  imgH * scaleNum > height ?  imgH * scaleNum : height
         contentW =  imgW * scaleNum
-        if (contentH > height) {
-          marginTop = (contentH - height) / 2 + 'Px';
-          imgs[index].marginTop = marginTop
-        } 
+        // if (contentH > height) {
+        //   marginTop = (contentH - height) / 2 + 'Px';
+        //   previewData[index].marginTop = marginTop
+        // } 
         this.setData({
           contentH,
           contentW,
           marginTop,
-          [imgItem]: imgs[index],
+          [imgItem]: item,
           isScorll: false,
        
           // scaleIndex: index,
@@ -93,43 +100,50 @@ Page({
           
         })
       } else if (type === 'tap') {
-        this._initScale(item, index, imgs)
+        // console.log('sss')
+        this._initScale(item, index, previewData)
       }
 
     })
   },
-  _initScale(item, index, imgs){
-    let imgItem = `imgs[${index}]`
+  _initScale(item, index, previewData){
+    let imgItem = `showData[${index}]`
     let tMatrix = Array(6).fill(0)
     if (item.isScale) {
       tMatrix[0] = 1;
       tMatrix[3] = 1;
-      imgs[index].matrix = tMatrix
-      imgs[index].isScale = false
-      imgs[index].marginTop = 0
+      // previewData[index].matrix = tMatrix
+      // previewData[index].isScale = false
+      // previewData[index].marginTop = 0
+      item.matrix = tMatrix
+      item.isScale = false
+      item.marginTop = 0
       this.data.scaleIndex = -1
       this.setData({
         isScorll: true,
         // scaleIndex: -1,
-        [imgItem]: imgs[index],
+        [imgItem]:item,
       })
     }
 
   },
   bindScrollViewToupper(e){
 
-  
+    // console.log('bindScrollViewToupper',e)
   },
   bindScrollViewTolower(e){
-  
+    // console.log('bindScrollViewTolower',e)
   },
 
   bindScroll(e){
 
     if ( this.data.timeer) clearTimeout( this.data.timeer)
     this.data.timeer = setTimeout(() => {
-      let { width, scaleIndex, imgs} = this.data
-   
+      let { width, scaleIndex, previewData} = this.data
+      let currentIndex = parseInt(scrollView.scrollLeft/width) + 1;
+      this.setData({  
+        currentIndex,})
+
       wx.createSelectorQuery()
         .select('.scroll-img-main')
         .scrollOffset()
@@ -138,15 +152,32 @@ Page({
           // console.log('bindTouchEnd===',res)
           let scrollView = res[0];
           // console.log('bindTouchEnd===', scrollView.scrollLeft)
-          console.log('_initScale====', parseInt(scrollView.scrollLeft/width), scaleIndex)
-          if ( parseInt(scrollView.scrollLeft/width) !== scaleIndex && scaleIndex !== -1) {
-            this.setData({
-              isScorll: false,
-            });
-            this._initScale(imgs[scaleIndex], scaleIndex, imgs)
-          }
+          console.log('_initScale====', scrollView.scrollLeft,  parseInt(scrollView.scrollLeft/width), scaleIndex)
+          let currentIndex = parseInt(scrollView.scrollLeft/width) + 1;
+          this.setData({  currentIndex, });
+
+          // let { showData, previewData } = this.data;
+          // if (currentIndex <= showData.length  && !showData[showData.length] && showData.length < previewData.length) {
+          //   console.log('_initScale====' )
+          //   let showItem = `showData[${showData.length}]`
+          //   this.setData({  
+          //     currentIndex, 
+          //     [showItem]: previewData[showData.length],
+          //   });
+          // } else {
+          //   this.setData({  currentIndex, });
+          // }
+          
+
+          // if ( parseInt(scrollView.scrollLeft/width) !== scaleIndex && scaleIndex !== -1) {
+          //   this.setData({
+          //     isScorll: false,
+          //     currentIndex: parseInt(scrollView.scrollLeft/width) 
+          //   });
+          //   this._initScale(previewData[scaleIndex], scaleIndex, previewData)
+          // }
         })
-    }, 1000);
+    }, 100);
   },
   bindTouchEnd(){
    
@@ -155,6 +186,7 @@ Page({
    * 双手指触发开始 计算开始触发两个手指坐标的距离
    */
   touchstartCallback: function(e) {
+    return
     // 单手指缩放开始，不做任何处理
     if (e.touches.length == 1) return;
     // 当两根手指放上去的时候，将距离(distance)初始化。
@@ -187,22 +219,22 @@ Page({
     // 为了防止缩放得太大，所以scale需要限制，同理最小值也是
   
     let { index } = e.currentTarget.dataset
-    let {imgs, imgH, imgW, height, contentH, contentW, marginTop} = this.data
-    let imgItem = `imgs[${index}]`
+    let {previewData, imgH, imgW, height, contentH, contentW, marginTop} = this.data
+    let imgItem = `previewData[${index}]`
     let tMatrix = Array(6).fill(0)
     tMatrix[0] = newScale;
     tMatrix[3] = newScale;
     // console.log(type, e)
     this.data.scaleIndex = index
-    imgs[index].matrix = tMatrix
-    imgs[index].isScale = true
+    previewData[index].matrix = tMatrix
+    previewData[index].isScale = true
     contentH =  imgH * newScale
     contentW =  imgW * newScale
     this.setData({
       contentH,
       contentW,
       marginTop,
-      [imgItem]: imgs[index],
+      [imgItem]: previewData[index],
       isScorll: false,
       // scaleIndex: index,
     })

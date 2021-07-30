@@ -27,17 +27,13 @@ export const IMG_ULRS = [
     src: 'https://kf.qq.com/xv-test/fsnb/kf-file/lx_pic/20210726/LXPIC_lxl36e3quo_LXIMAGE_83a665d71b3143cb8312aab66ca625fb.jpg?s1=1627456888&s2=q9me16dljbYaVdPTherzshen&s3=36000&s4=d2b0fb73e120baf0661d7237830dc4962d69a170',
     matrix: '(1,0,0,1,0,0)',
     origin: "0 0",
-    desc: `React 使用webpack 打包时，会生成一个main.js的文件。当页面组件增多时，main.js 也跟着变大，从而减慢页面的加载速度。使用 compression-webpack-plugin 配合 nginx，将文件压缩，这种方法可行，但是加载首页的时候，效果还是不理想。于是，想到了把main.js 拆分多个。从而减少首屏js大小，加快加载速度。
-    作者：起再好的名字也中不了奖
-    链接：https://juejin.cn/post/6918266445373636621
-    来源：掘金
-    著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。`
+    desc: 'asdd'
   },
   {
     src: 'https://kf.qq.com/xv-test/fsna/kf-file/lx_pic/20210726/LXPIC_lxkis75kva_LXIMAGE_d32692e14ae34b67a70492bf84c17102.jpg?s1=1627456888&s2=ePB4VWVShwhIvUEqherzshen&s3=36000&s4=cdce2343e16475d393cef363087553918e84d6c0',
     matrix: '(1,0,0,1,0,0)',
     origin: "0 0",
-    desc: 'asdd'
+    desc: 'asdadasdsadd'
   }
   
 ]

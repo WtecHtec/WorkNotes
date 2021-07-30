@@ -1,36 +1,105 @@
-/* components/picviewbox/index.wxss */
-.content {
-  height: 100%;
-  font-size: 0;
-}
-
-::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  color: transparent;
-}
-
-.images image {
-  text-align: center;
+/* pages/perviewimg/index.wxss */
+.container{
+  width: 100%;
+  height: 100vh;
+  background-color: black;
   position: absolute;
+  top: 0;
+  left: 0;
 }
 
-.images{
-
-  transition: transform 1s;
+.page-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 46rpx;
+  color: #ffffff;
+  text-align: center;
+  line-height: 46rpx;
+  z-index: 9999;
+  background: rgba(0,0,0,0.5);
+  padding: 8rpx 0;
+  padding: 0 24rpx;
+  box-sizing: border-box;
 }
-
-
-.img-normal{
-  transform:rotate(0deg);
-  transition: transform 1s,height 0.5s, width 0.5s;
-}
-
-.img-rotate{
-  transform:rotate(90deg);
-  transition: transform 1s,height 0.5s, width 0.5s;
-}
-
-page{
+.page-body{
+  width: 100%;
   height: 100%;
 }
+
+.scroll-view_H{
+  white-space: nowrap;
+  position: relative;
+}
+.scroll-view-item_H{
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  /* overflow: auto; */
+  position: relative;
+}
+
+.scroll-view_desc {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: rgba(39, 35, 35, 0.8);
+  color: #fff;
+  padding: 24rpx;
+  box-sizing: border-box;
+  white-space: normal;
+  font-size: 30rpx;
+  overflow: hidden;
+  /* display: -webkit-box; */
+  word-break: break-all;
+  overflow: hidden;
+  min-height: 184rpx;
+  max-height: 184rpx;
+  line-height: 50rpx;
+  z-index: 999;
+}
+
+.desc-more {
+  margin: 0 8rpx;
+  color: rgba(38, 92, 240,0.8);
+}
+.view_desc_more {
+  max-height: 600rpx;
+  transition: max-height 0.5s;
+}
+
+.view_desc_down {
+  max-height: 184rpx;
+  transition: max-height 0.5s;
+}
+/* .view-item-scale{
+  position: absolute;
+  top: 50%;
+  left: 0px;
+  transform: translateY(-50%); 
+} */
+
+
+/* .view-default-scale{
+  transition: transform 0.2s;
+} */
+
+
+.view-content{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* overflow: auto; */
+  position: relative;
+}
+
+.main-content {
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+  position: relative;
+}
+
