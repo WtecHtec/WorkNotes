@@ -67,25 +67,6 @@ const Draw = function (canvasID,canvas, width, height, pixelRatio, config = {}) 
     context.fillStyle = '#fff'
     context.fillRect(0, 0, this.width, this.height )
   }
-  this.createBase64 = ()=>{
-    return this.canvas.toDataURL('image/png', 1)
-
-    
-// wx.canvasToTempFilePath({
-//   x: 0,
-//   y: 0,
-//   width: width,
-//   height: height,
-//   destWidth: width,
-//   destHeight: height,
-//   canvas: canvas,
-//   success(res) {
-//     console.log(res.tempFilePath)
-//   }
-// })
-
-   
-  }
 }
 export {
   Draw
