@@ -1,0 +1,24 @@
+<view class="date-context">
+  <view class="week-main">
+    <view wx:for="{{weeks}}" wx:key="index" class="week-item">{{item}}</view>
+  </view>
+  <scroll-view scroll-y style="width: 100%; height: {{windowHeight - (isfinish ? 70 : 0) }}px;"
+  scroll-into-view="{{scrollInto}}" scroll-with-animation  refresher-enabled="{{true}}"
+  refresher-triggered="{{ refreshering}}" refresher-threshold="{{80}}"  bindrefresherrefresh="bindPulling">
+    <block wx:for="{{dateList}}" wx:key="index">
+      <view class="date-list" id="date_{{item.year}}_{{item.month}}">
+        <view class="date-title"> {{ item.year + '-' + item.month}} </view>
+        <view class="date-main">
+          <block wx:for="{{item.days}}" wx:for-index="idx" wx:key="idx" wx:for-item="itemDay">
+            <view bindtap="bindSelectDate" data-itemday="{{itemDay}}" class="date-item {{ startTime && !itemDay.hidden && itemDay.time === startTime ? '-active' : '' }}   {{ endTime && !itemDay.hidden && itemDay.time === endTime ? '-active' : '' }} {{  startTime && endTime && itemDay.time > startTime &&  itemDay.time < endTime && !itemDay.hidden ? '-pass' : '' }}">
+              <view class="num {{ itemDay.time >= nowTime || itemDay.disabled ? '-disabled' : ''}}"> {{ itemDay.hidden ?  '': itemDay.date  }}</view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </block>
+  </scroll-view>
+  <view class="footer {{ isfinish ? '-show-btn' : '-hidden-btn' }}" >
+      <view class="btn-normal" hover-class="-hover-btn"> 完成 </view>
+    </view>
+</view>

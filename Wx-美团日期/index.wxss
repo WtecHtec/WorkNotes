@@ -1,0 +1,85 @@
+.date-context {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+.week-main {
+  margin-bottom: 24rpx;
+  display: flex;
+  height: 46rpx;
+  position: relative;
+}
+.week-item {
+  width: calc(100vw / 7);
+  line-height: 46rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.date-list {
+  margin-bottom: 16rpx;
+}
+.date-main {
+  display: flex;
+  flex-wrap: wrap;
+
+}
+
+.date-title {
+  padding: 0 30rpx;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+.date-item {
+  width: calc(100vw / 7);
+  height: 128rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.-disabled{
+  color: #999;
+}
+.-active {
+  background: #265cf0;
+  font-weight: 700;
+  color: #fff;
+}
+
+.-pass {
+  background: #e5ebfd;
+}
+.footer {
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+.btn-normal {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 90rpx;
+  line-height: 90rpx;
+  background: #265CF0;
+  border-radius: 8rpx;
+  font-size: 32rpx;
+  color: #FFFFFF;
+  text-align: center;
+  padding: 0rpx;
+}
+.-hover-btn {
+  background: rgba(38,92,240, 0.8);
+}
+.-hidden-btn {
+  transform: translateY(70Px);
+  transition: all ease-in 0.2s;
+}
+.-show-btn {
+  transform: translateY(0Px);
+  transition: all ease-in 0.2s;
+}
