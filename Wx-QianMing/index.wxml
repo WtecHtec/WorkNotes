@@ -1,0 +1,18 @@
+<!--pages/qianming/index.wxml-->
+
+<view class="qianm-main">
+
+<view style="display: flex;">
+  <button bindtap="bindUpload"> 上传 </button>
+  <button bindtap="bindClear"> 清除 </button>
+</view>
+ 
+
+ 
+<canvas type="2d" id="myCanvas" canvas-id="my-Canvas" style="width:{{ cW}}px; height: {{cH}}px" bindtouchstart="touchStart" bindtouchmove="touchMove"></canvas>
+ 
+
+<canvas class="tmp-canvas"  id="tmp_board" canvas-id="tmp_board" disable-scroll="true" style="width:{{ cH + 10 }}px; height: {{ cH }}px"></canvas>
+ 
+
+</view>

@@ -1,0 +1,5 @@
+<!--index.wxml-->
+<view class="container">
+<button bindtap="bindViewTap" > LIKE </button>
+<canvas type="2d" canvas-id="likeCanvas" id="likeCanvas" style="width:100%;height: 400px;"> </canvas>
+</view>
