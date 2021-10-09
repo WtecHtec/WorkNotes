@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            margin: 0;
+            font-size: 16px;
+            background: #f8f8f8;
+        }
+        h1,h2,h3,h4,h5,h6,p {
+            margin: 0;
+        }
+
+        /* * {
+            outline: 1px solid pink;
+        } */
+
+        .upload {
+            box-sizing: border-box;
+            margin: 30px auto;
+            padding: 15px 20px;
+            width: 500px;
+            height: auto;
+            border-radius: 15px;
+            background: #fff;
+        }
+
+        .upload h3 {
+            font-size: 20px;
+            line-height: 2;
+            text-align: center;
+        }
+
+        .upload .upload-file {
+            position: relative;
+            margin: 30px auto;
+        }
+
+        .upload .upload-file label {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 150px;
+            border: 1px dashed #ccc;
+        }
+
+        .upload .upload-file input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+        }
+
+        .upload-progress {
+            display: flex;
+            align-items: center;
+        }
+
+        .upload-progress p {
+            position: relative;
+            display: inline-block;
+            flex: 1;
+            height: 15px;
+            border-radius: 10px;
+            background: #ccc;
+            overflow: hidden;
+        }
+
+        .upload-progress p span {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(to right bottom, rgb(163, 76, 76), rgb(231, 73, 52));
+            transition: all .4s;
+        }
+
+        .upload-link {
+            margin: 30px auto;
+        }
+
+        .upload-link a {
+            text-decoration: none;
+            color: rgb(6, 102, 192);
+        }
+
+        @media all and (max-width: 768px) {
+            .upload {
+                width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="upload">
+    <h3>普通上传</h3>
+    <form>
+        <div class="upload-file">
+            <label for="file">请选择文件</label>
+            <input type="file" name="file" id="file" accept="image/*">
+        </div>
+        <div class="upload-progress">
+            当前进度：
+            <p>
+                <span style="width: 0;" id="current"></span>
+            </p>
+        </div>
+        <div class="upload-link">
+            文件地址：<a id="links" href="javascript:void();" target="_blank">文件链接</a>
+        </div>
+    </form>
+</div>
+<div class="upload">
+    <h3>大文件上传</h3>
+    <form>
+        <div class="upload-file">
+            <label for="file">请选择文件</label>
+            <input type="file" name="file" id="big-file" accept="application/*">
+        </div>
+        <div class="upload-progress">
+            当前进度：
+            <p>
+                <span style="width: 0;" id="big-current"></span>
+            </p>
+        </div>
+        <div class="upload-link">
+            文件地址：<a id="big-links" href="" target="_blank">文件链接</a>
+        </div>
+    </form>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.21.1/axios.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/spark-md5/3.0.0/spark-md5.min.js"></script>
+<script>
+
+
+    // 获取元素
+    const file = document.querySelector('#file');
+    let current = document.querySelector('#current');
+    let links = document.querySelector('#links');
+    let baseUrl = 'http://localhost:3000';
+
+    // 监听文件事件
+    file.addEventListener('change', (e) => {
+        console.log(e.target.files);
+        let file = e.target.files[0];
+        if (file.type.indexOf('image') == -1) {
+            return alert('文件格式只能是图片！');
+        }
+        if ((file.size / 1000) > 100) {
+            return alert('文件不能大于100KB！');
+        }
+        links.href = '';
+        file.value = '';
+        this.upload(file);
+    }, false);
+
+    // 上传文件
+    async function upload (file) {
+        let formData = new FormData();
+        formData.append('file', file);
+        let data = await axios({
+            url: baseUrl+'/small',
+            method: 'post',
+            data: formData,
+            onUploadProgress: function(progressEvent) {
+                current.style.width = Math.round(progressEvent.loaded / progressEvent.total * 100) + '%';
+            }
+        });
+        if (data.data.code == 200) {
+            links.href = data.data.data.url;
+        } else {
+            alert('上传失败！')
+        }
+    }
+
+
+
+
+
+
+    const bigFile = document.querySelector('#big-file');
+    let bigCurrent = document.querySelector('#big-current');
+    let bigLinks = document.querySelector('#big-links');
+    let fileArr = [];
+    let md5Val = '';
+    let ext = '';
+
+
+    bigFile.addEventListener('change', (e) => {
+        let file = e.target.files[0];
+        let index =   file.name.lastIndexOf('.')
+        ext = file.name.substr(index + 1)
+        if (file.type.indexOf('application') == -1) {
+            return alert('文件格式只能是文档应用！');
+        }
+        if ((file.size / (1000*1000)) > 100) {
+            return alert('文件不能大于100MB！');
+        }
+        this.uploadBig(file);
+    }, false);
+
+
+    async function uploadBig(file){
+        let chunkIndex = 0
+        fileArr  = sliceFile (file)
+        md5Val =  await md5File(fileArr)
+        let data =  await axios({
+            url: `${baseUrl}/big?type=check&md5Val=${md5Val}&total=${fileArr.length}`,
+            method: 'post',
+        })
+        if (data.data.code == 200) {
+            chunkIndex =  data.data.data.data.chunk.length  ? data.data.data.data.chunk.length - 1 : 0
+            console.log('chunkIndex', chunkIndex)
+        }
+        await uploadSlice(chunkIndex)
+        console.log('result', md5Val)
+    }
+    // 切割文件
+    function sliceFile (file) {
+        const files = [];
+        const chunkSize = 128*1024;
+        for (let i = 0; i < file.size; i+=chunkSize) {
+            const end = i + chunkSize >= file.size ? file.size : i + chunkSize;
+            let currentFile = file.slice(i, (end > file.size ? file.size : end));
+            files.push(currentFile);
+        }
+        return files;
+    }
+
+    // 获取文件md5值
+    function md5File (files) {
+        const spark = new SparkMD5.ArrayBuffer();
+
+        let fileReader;
+        for (var i = 0; i < files.length; i++) {
+            fileReader = new FileReader();
+            fileReader.readAsArrayBuffer(files[i]);
+        }
+        return new Promise((resolve) => {
+            fileReader.onload = function(e) {
+                spark.append(e.target.result);
+                if (i == files.length) {
+                    resolve(spark.end());
+                }
+            }
+        })
+    }
+
+
+    async function uploadSlice (chunkIndex = 0) {
+        let formData = new FormData();
+        formData.append('file', fileArr[chunkIndex]);
+        let data = await axios({
+            url: `${baseUrl}/big?type=upload&current=${chunkIndex}&md5Val=${md5Val}&total=${fileArr.length}`,
+            method: 'post',
+            data: formData,
+        })
+
+        if (data.data.code == 200) {
+            if (chunkIndex < fileArr.length -1 ){
+                bigCurrent.style.width = Math.round((chunkIndex+1) / fileArr.length * 100) + '%';
+                ++chunkIndex;
+                uploadSlice(chunkIndex);
+            } else {
+                mergeFile();
+            }
+        }
+    }
+
+    async function mergeFile () {
+        let data = await axios.post(`${baseUrl}/big?type=merge&md5Val=${md5Val}&total=${fileArr.length}&ext=${ext}`);
+        if (data.data.code == 200) {
+            alert('上传成功！');
+            bigCurrent.style.width = '100%';
+            bigLinks.href = data.data.data.url;
+        } else {
+            alert(data.data.data.info);
+        }
+    }
+
+
+</script>
+</body>
+</html>

@@ -11,4 +11,4 @@
 9. HT FOR WEB 自定义菜单
 10. Color 计算颜色的互补、辅助色。
 11. vue+jquery数学公式编辑。
-12. 小程序图片预览组件
+12. NodeDuanDian Node服务断点续传
