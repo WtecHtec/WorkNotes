@@ -12,3 +12,5 @@
 10. Color 计算颜色的互补、辅助色。
 11. vue+jquery数学公式编辑。
 12. NodeDuanDian Node服务断点续传
+13. Wx-QianMing 微信小程序canvas签名
+14. Wx-美团日期
