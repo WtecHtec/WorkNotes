@@ -53,6 +53,7 @@ try {
       let data = fs.readFileSync(projectPath, 'utf8');
       let jsonData = JSON.parse(data)
       jsonData.setting.appid = settingData.appid
+	  jsonData.appid = settingData.appid
       fs.writeFileSync(projectPath, JSON.stringify(jsonData, '', 2)  );
     } catch (e) {
       console.error('json error', e);
