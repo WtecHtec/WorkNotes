@@ -1,0 +1,14 @@
+{
+  "name": "wx-config-npm",
+  "version": "1.0.0",
+  "description": "",
+  "bin": {
+    "set-wx": "./wx-config.js"
+  },
+  "main": "wx-config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
