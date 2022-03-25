@@ -1,5 +1,5 @@
 # WorkNotes
-手撸实习日记
+工具代码目录：
 1. DemoQuartz ---- spring 自定义定时任务（添加 删除 修改）
 2. exportExecl ---- 前端导出execl 表格
 3. html5-Qrcode ---- 前端扫码
@@ -16,4 +16,5 @@
 14. Wx-美团日期 ----   微信小程序仿美团日期组件
 15. react-web-pro-master ---- react项目模板
 16. word-cloud --- 微信小程序词云组件
-17. web-note-canvas --- 谷歌浏览器插件笔记
+17. wx-set-appid --- 微信小程序修改appid工具
+18. web-note-canvas --- 谷歌浏览器插件笔记
