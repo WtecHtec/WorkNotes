@@ -16,3 +16,4 @@
 14. Wx-美团日期 ----   微信小程序仿美团日期组件
 15. react-web-pro-master ---- react项目模板
 16. word-cloud --- 微信小程序词云组件
+17. web-note-canvas --- 谷歌浏览器插件笔记

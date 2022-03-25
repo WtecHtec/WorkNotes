@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popup</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      .herz-m-from {
+        display: flex;
+        align-items: center;
+        height: 40px;
+        box-sizing: border-box;
+        padding: 8px; 
+      }
+      .hz-opt-img {
+        width: 32px;
+        height: 32px;
+        padding: 4px;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      .ht-active {
+        border: #007fff 1px solid;
+      }
+      .hz-opt-img:hover {
+        background-color:#E5E4E5;
+      }
+      .wrap-image {
+        pointer-events: none;
+        width: 100%;
+        height: 100%;
+      }
+      .hz-opt-img input[type='color'] {
+        width: 32px;
+        border: unset !important;
+        color: unset !important;
+        padding: 0 !important;
+        margin-left: -4px !important;
+      }
+    </style>
+</head>
+<body>
+    <div>
+        <div id="note-btn" class="herz-m-from">
+          <!-- <div data-type="other" class="hz-opt-img" title="颜色修改">
+            <input data-type="other" id="brush-color" type="color" />
+          </div>
+          <div data-type="select" class="hz-opt-img" title="选择工具">
+            <img class="wrap-image" src="./img//popup/select.png" />
+          </div> -->
+          <div data-type="pen" class="hz-opt-img" title="画笔">
+            <img class="wrap-image" src="./img//popup/pen.png" />
+          </div>
+          <!-- <div data-type="remove" class="hz-opt-img" title="橡皮擦">
+            <img class="wrap-image" src="./img//popup/remove.png" />
+          </div>
+          <div data-type="close" class="hz-opt-img" title="关闭，将不保存">
+            <img class="wrap-image" src="./img//popup/del.png" />
+          </div>
+          <div data-type="save" class="hz-opt-img" title="保存笔记">
+            <img class="wrap-image" src="./img//popup/sure.png" />
+          </div> -->
+        </div>
+    </div>
+    <script src="/js/libs/jquery.min.js"></script>
+    <script src="/js/src/popup.js" ></script>
+</body>
+</html>

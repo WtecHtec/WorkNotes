@@ -1,0 +1,62 @@
+{
+    "manifest_version": 3,
+    "name": "Notes Canvas",
+    "version": "1.0.0",
+    "description": "基于canvas的线上notes",
+    "icons": {
+        "16": "img/icon/icon.png",
+        "48": "img/icon/icon.png",
+        "128": "img/icon/icon.png"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_icon": "img/icon/icon.png",
+        "default_title": "这是一个示例Chrome插件",
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "js/src/data.js",
+                "js/libs/html2canvas.js",
+                "js/libs/fabric.min.js",
+                "js/libs/jquery.min.js",
+                "js/src/global-data.js",
+                "js/src/content-msg.js",
+                "js/src/fabrictool/config-data.js",
+                "js/src/fabrictool/draws/arrow.js",
+                "js/src/fabrictool/draws/serial.js",
+                "js/src/fabrictool/draws/index.js",
+                "js/src/fabrictool/setting.js",
+                "js/src/fabrictool/event.js",
+                "js/src/fabrictool/index.js",
+                "js/src/tool/element.js",
+                "js/src/tool/event.js",
+                "js/src/tool/index.js",
+                "js/src/tools.js",
+                "js/src/main.js"
+            ],
+            "css": [
+                "css/hz-content.css"
+            ],
+            "run_at": "document_end"
+        }
+    ],
+    "permissions": [
+        "activeTab"
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+              "/img/popup/*.png"
+            ],
+            "matches": ["<all_urls>"],
+            "extension_ids": []
+        }
+    ]
+}
