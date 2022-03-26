@@ -18,3 +18,4 @@
 16. word-cloud --- 微信小程序词云组件
 17. wx-set-appid --- 微信小程序修改appid工具
 18. web-note-canvas --- 谷歌浏览器插件笔记
+19. FuncJsRay --- eval 运行时间限制
