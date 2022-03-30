@@ -1,5 +1,5 @@
 
-function initFabricCanvas(){
+async function initFabricCanvas(){
   //初始化画板
   g_fabric_canvas = new fabric.Canvas('hz-note_canvas', {
     isDrawingMode: true,
@@ -14,15 +14,7 @@ function initFabricCanvas(){
   handleMouseUp(g_fabric_canvas, drawing)
   handleMouseMove(g_fabric_canvas, drawing)
   handleSelectionCreated(g_fabric_canvas)
-  cacheData = null
-  try {
-    let pageUrl = window.location.href
-    if (g_login) {
-
-    } else {
-      cacheData = window.localStorage.getItem(pageUrl)
-    }
-  } catch(e){}
+  const cacheData = await checkHasData()
   if (cacheData) {
     g_fabric_canvas.loadFromJSON(JSON.parse(cacheData) , ()=> {
       requestAnimationFrame(()=> {

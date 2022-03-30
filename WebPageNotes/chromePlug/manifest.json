@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Notes Canvas",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "description": "基于canvas的线上notes",
     "icons": {
         "16": "img/icon/icon.png",
@@ -23,11 +23,11 @@
             ],
             "js": [
                 "js/src/data.js",
+								"js/libs/axio.js",
                 "js/libs/html2canvas.js",
                 "js/libs/fabric.min.js",
                 "js/libs/jquery.min.js",
                 "js/src/global-data.js",
-                "js/src/content-msg.js",
                 "js/src/fabrictool/config-data.js",
                 "js/src/fabrictool/draws/arrow.js",
                 "js/src/fabrictool/draws/serial.js",
@@ -39,7 +39,8 @@
                 "js/src/tool/event.js",
                 "js/src/tool/index.js",
                 "js/src/tools.js",
-                "js/src/main.js"
+                "js/src/main.js",
+								"js/src/content-msg.js"
             ],
             "css": [
                 "css/hz-content.css"

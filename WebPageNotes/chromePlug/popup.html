@@ -40,10 +40,29 @@
         padding: 0 !important;
         margin-left: -4px !important;
       }
+			
+		.prm_btn{
+			font-family: "'微软雅黑','Helvetica Neue',Helvetica,Arial,sans-serif";
+			font-size: 13px!important;
+			height: 30px;
+			line-height: 18px!important;
+			padding: 3px 18px;
+			display: inline-block;
+			vertical-align: middle;
+			font-weight: normal;
+			border-radius: 3px;
+			margin: 0 8px 0 3px;
+			border: 1px solid #3383da;
+			color: #ffffff;
+			background-color: #3383da;
+			cursor: pointer;
+			white-space: nowrap;
+		}
+
     </style>
 </head>
 <body>
-    <div>
+    <div style="display: flex;align-items: center;">
         <div id="note-btn" class="herz-m-from">
           <!-- <div data-type="other" class="hz-opt-img" title="颜色修改">
             <input data-type="other" id="brush-color" type="color" />
@@ -51,9 +70,10 @@
           <div data-type="select" class="hz-opt-img" title="选择工具">
             <img class="wrap-image" src="./img//popup/select.png" />
           </div> -->
-          <div data-type="pen" class="hz-opt-img" title="画笔">
+          <div data-type="pen" class="hz-opt-img" >
             <img class="wrap-image" src="./img//popup/pen.png" />
           </div>
+					
           <!-- <div data-type="remove" class="hz-opt-img" title="橡皮擦">
             <img class="wrap-image" src="./img//popup/remove.png" />
           </div>
@@ -64,6 +84,7 @@
             <img class="wrap-image" src="./img//popup/sure.png" />
           </div> -->
         </div>
+				
     </div>
     <script src="/js/libs/jquery.min.js"></script>
     <script src="/js/src/popup.js" ></script>

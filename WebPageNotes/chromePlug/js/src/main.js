@@ -25,8 +25,55 @@ function createCanvas(){
   })
 }
 
+function renderNotes() {
+	$('body').addClass('hz-body')
+	g_loadingel.show()
+	setTimeout(()=> {
+		g_noteStatus = true
+		if (!g_fabric_canvas) { 
+			createCanvas()
+		} else {
+			$('.hz-tools_content').show()
+			$('.herz-m-from').show()
+		}
+		requestAnimationFrame(()=> {
+			$('.hz-opt-img').removeClass('ht-active')
+			$('.hz-pen').addClass('ht-active')
+			handleOpt('pen')
+			g_loadingel.hide()
+		})
+	}, g_fabric_canvas ? 1000 : 2000)
+}
+
 function initEl() {
   g_loadingel = createLoadingEl()
   $('body').append(g_loadingel)
+	window.onload =  ()=> {
+		renderHasData()
+	}
 }
+
+async function renderHasData() {
+
+	g_login = getLogin('get');
+	const res = await checkHasData()
+	const reads = handleReadStatus('get')
+	// console.log(res, )
+	if ( res && !reads ) {
+		const r = window.confirm('Notes Canvas 有一个笔记在召唤！！是否立即查看？')
+		if (r) {
+			console.log('opening')
+			handleReadStatus('set', true)
+			renderNotes();
+		} else {
+			console.log('close')
+			// getLogin('set', false);
+		}
+	} else {
+		// getLogin('set', false);
+	}
+
+}
+
+
 initEl()
