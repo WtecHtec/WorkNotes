@@ -1,0 +1,1 @@
+let g_fabric_canvas = null

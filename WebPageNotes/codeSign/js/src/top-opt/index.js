@@ -1,0 +1,4 @@
+function initRenderOpt() {
+	renderOptDom();
+	initOptEvent();
+}

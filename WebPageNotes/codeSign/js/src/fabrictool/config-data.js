@@ -1,0 +1,12 @@
+const g_fc_drawWidth = 2; //笔触宽度
+let g_fc_color = "#E34F51"; //画笔颜色
+let g_fc_drawingObject = null; //当前绘制对象
+let g_fc_moveCount = 1; //绘制移动计数器
+let g_fc_doDrawing = false; // 绘制状态
+let g_fc_mouseFrom = {}
+let g_fc_mouseTo = {}
+let g_fc_drawType = 'rect'
+let g_fc_canvasObjectIndex = 0
+let g_fc_textbox = null
+let g_fc_out_drawtypes = ['text', 'serial']
+let g_fc_serial_num = 0

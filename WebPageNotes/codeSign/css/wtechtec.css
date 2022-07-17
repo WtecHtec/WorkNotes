@@ -1,0 +1,21 @@
+.wtechtec-opt {
+	height: 64px;
+	width: 180px;
+	position: fixed;
+	top: 0;
+	right: 0;
+	border: 1px solid #265CF0;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	z-index: 99999;
+	text-align: center;
+}
+
+.hz-tools_content {
+	position: absolute !important;
+	top: 0 !important;
+	left: 0 !important;
+	user-select: none;
+	z-index: 9999999999;
+}
