@@ -17,8 +17,9 @@ function initOptEvent() {
         targetDom.text(g_making ? '暂停制作' : '开始制作');
         g_making ? $('.wtc-tools_content').show() : $('.wtc-tools_content').hide();
         g_fabric_canvas.selection = false;
-        g_fabric_canvas.skipTargetFind = false;
+        g_fabric_canvas.skipTargetFind = true;
         g_fabric_canvas.selectable = false;
+        g_fabric_canvas.discardActiveObject(); //清楚选中框
       } else {
         g_making = true;
         targetDom.text('暂停制作');
@@ -28,7 +29,7 @@ function initOptEvent() {
       g_select_status = true;
       g_making = false;
       g_fc_drawType = null;
-      $('#wtc_make').text('暂停制作');
+      $('#wtc_make').text('开始制作');
       g_fabric_canvas.selection = true;
       g_fabric_canvas.skipTargetFind = false;
       g_fabric_canvas.selectable = true;
