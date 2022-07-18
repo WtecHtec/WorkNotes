@@ -41,13 +41,11 @@
         margin-left: -4px !important;
       }
 			
-		.prm_btn{
+		.prm_btn {
 			font-family: "'微软雅黑','Helvetica Neue',Helvetica,Arial,sans-serif";
-			font-size: 13px!important;
+			font-size: 14px!important;
 			height: 30px;
-			line-height: 18px!important;
-			padding: 3px 18px;
-			display: inline-block;
+			padding: 4px 18px;
 			vertical-align: middle;
 			font-weight: normal;
 			border-radius: 3px;
@@ -57,13 +55,25 @@
 			background-color: #3383da;
 			cursor: pointer;
 			white-space: nowrap;
+      display: flex;
+      align-items: center;
 		}
-
+    .form_div {
+      display: none;
+      text-align: center;
+    }
+    .no-event {
+      pointer-events: none;
+    }
     </style>
 </head>
 <body>
     <div style="display: flex;align-items: center;">
         <div id="note-btn" class="herz-m-from">
+          <div data-type="other" data-opt="login" id="prm_btn_login" class="prm_btn " title="登录帐号查看云数据">
+            <span id="user_name" class="no-event"></span>
+            <span id="login_txt" class="no-event">登录</span>
+          </div>
           <!-- <div data-type="other" class="hz-opt-img" title="颜色修改">
             <input data-type="other" id="brush-color" type="color" />
           </div>
@@ -73,20 +83,23 @@
           <div data-type="pen" class="hz-opt-img" >
             <img class="wrap-image" src="./img//popup/pen.png" />
           </div>
-					
           <!-- <div data-type="remove" class="hz-opt-img" title="橡皮擦">
             <img class="wrap-image" src="./img//popup/remove.png" />
           </div>
           <div data-type="close" class="hz-opt-img" title="关闭，将不保存">
             <img class="wrap-image" src="./img//popup/del.png" />
-          </div>
-          <div data-type="save" class="hz-opt-img" title="保存笔记">
-            <img class="wrap-image" src="./img//popup/sure.png" />
           </div> -->
         </div>
-				
+    </div>
+    <div class="form_div">
+      <form id="form">
+        <input name="account" placeholder="验证码" />
+      </form>
+      <button id="login_form">登录</button>
     </div>
     <script src="/js/libs/jquery.min.js"></script>
+    <script src="/js/libs/axio.js"></script>
+    <script src="/js/src/global-data.js"></script>
     <script src="/js/src/popup.js" ></script>
 </body>
 </html>
