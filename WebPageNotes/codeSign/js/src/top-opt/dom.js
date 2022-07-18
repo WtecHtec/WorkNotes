@@ -13,16 +13,20 @@ function createCanvas() {
 	const canvasEl = $('<canvas></canvas>')
 	const bodyEl = $('html')
 	canvasEl.attr({
-		'id': 'hz-note_canvas',
-		'width': bodyEl.width() + 'px',
-		'height': bodyEl.height() + 'px',
+		id: 'wtc_canvas',
+		width: bodyEl.width() + 'px',
+		height: bodyEl.height() + 'px',
 	})
 	return canvasEl;
 }
 
 function renderOptDom() {
 	const parentDom = createDiv('wtechtec-opt', 'wtechtec_opt');
-	parentDom.append('<div>制作</div>')
+  OPT_DATAS.forEach(item => {
+    const itemDiv = createDiv(item.className, item.id)
+    itemDiv.text(item.label);
+    parentDom.append(itemDiv);
+  })
 	const loadingEl = createLoadingEl();
 	const fargment = createFragment();
 	fargment.append(parentDom);

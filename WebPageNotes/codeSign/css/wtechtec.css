@@ -1,6 +1,5 @@
 .wtechtec-opt {
-	height: 64px;
-	width: 180px;
+  width: 220px;
 	position: fixed;
 	top: 0;
 	right: 0;
@@ -10,12 +9,27 @@
 	align-items: center;
 	z-index: 99999;
 	text-align: center;
+  cursor: pointer;
+  background-color: #F5F6FA;
+}
+.wtechtec-opt-item {
+  padding: 12px 4px;
+  flex: 1;
+}
+.wtechtec-opt-item:hover {
+  color: #265CF0;
+  background-color: rgba(38,92,240, 0.08);
+}
+.wtechtec-opt-item.active {
+  color: #265CF0;
+  background-color: rgba(38,92,240, 0.1);
+  font-weight: bold;
 }
 
-.hz-tools_content {
+.wtc-tools_content {
 	position: absolute !important;
-	top: 0 !important;
+	top: 50px !important;
 	left: 0 !important;
 	user-select: none;
-	z-index: 9999999999;
+  z-index: 9999;
 }

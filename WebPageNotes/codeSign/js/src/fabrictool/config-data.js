@@ -1,5 +1,5 @@
 const g_fc_drawWidth = 2; //笔触宽度
-let g_fc_color = "#E34F51"; //画笔颜色
+let g_fc_color = "rgba(38,92,240, 0.08)"; //画笔颜色
 let g_fc_drawingObject = null; //当前绘制对象
 let g_fc_moveCount = 1; //绘制移动计数器
 let g_fc_doDrawing = false; // 绘制状态
