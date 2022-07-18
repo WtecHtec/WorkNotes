@@ -1,7 +1,7 @@
 function randomNum(min, max) {
-  return min + Math.random() * (max - min);
+	return min + Math.random() * (max - min);
 }
 
 function randomColor() {
-  return `rgba(${randomNum()}, ${randomNum()}, ${randomNum()},0.08)`;
+	return `rgba(${randomNum(155, 200)}, ${randomNum(155, 200)}, ${randomNum(155, 200)},0.1)`;
 }

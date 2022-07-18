@@ -9,6 +9,7 @@ function handleMouseDown(canvas) {
 		g_fc_mouseFrom.x = xy.x;
 		g_fc_mouseFrom.y = xy.y;
 		g_fc_doDrawing = true;
+		g_fc_color = randomColor();
 	});
 }
 function handleMouseUp(canvas, drawing) {
@@ -22,9 +23,7 @@ function handleMouseUp(canvas, drawing) {
 		if (typeof drawing === 'function' && g_fc_out_drawtypes.indexOf(g_fc_drawType) !== -1) {
 			drawing(canvas);
 		}
-		requestAnimationFrame(() => {
-			g_fc_doDrawing = false;
-		})
+		g_fc_doDrawing = false;
 	});
 }
 function handleMouseMove(canvas, drawing) {
@@ -66,10 +65,10 @@ function handleSelectionCreated(canvas) {
 			}
 			canvas.discardActiveObject(); //清楚选中框
 
-			requestAnimationFrame(() => {
-				console.log(canvas.getObjects())
-				setSerialSortNum(canvas)
-			})
+			// requestAnimationFrame(() => {
+			// 	console.log(canvas.getObjects())
+			// 	setSerialSortNum(canvas)
+			// })
 		}
 	});
 }

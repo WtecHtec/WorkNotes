@@ -16,17 +16,24 @@ function initFabricCanvas() {
 	handleMouseMove(g_fabric_canvas, drawing)
 	handleSelectionCreated(g_fabric_canvas)
 }
+function checkXY(mouseFrom, mouseTo) {
+	if (mouseFrom && mouseTo) {
+		console.log(mouseFrom, mouseTo)
+		return mouseFrom.x === mouseTo.x && mouseFrom.y === mouseTo.y;
+	}
+	return true;
+}
 
 function drawing(canvas) {
 	if (g_fc_drawingObject) {
 		canvas.remove(g_fc_drawingObject);
 	}
 	let canvasObject = null;
-	if (DRAW_DATA[g_fc_drawType] && Object.keys(g_fc_mouseFrom).length) {
+	if (DRAW_DATA[g_fc_drawType] && Object.keys(g_fc_mouseFrom).length && !checkXY(g_fc_mouseFrom, g_fc_mouseTo)) {
 		canvasObject = DRAW_DATA[g_fc_drawType](g_fabric_canvas, g_fc_mouseFrom, g_fc_mouseTo, g_fc_color, g_fc_drawWidth)
 	}
 	if (canvasObject) {
-		canvas.add(canvasObject); 
+		canvas.add(canvasObject);
 		if (['arrow', 'rect'].indexOf(g_fc_drawType) !== -1) {
 			g_fc_drawingObject = canvasObject;
 		}
