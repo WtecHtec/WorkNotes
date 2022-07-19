@@ -1,5 +1,5 @@
 .wtechtec-opt {
-  width: 220px;
+	width: 220px;
 	position: fixed;
 	top: 0;
 	right: 35px;
@@ -9,22 +9,25 @@
 	align-items: center;
 	z-index: 99999;
 	text-align: center;
-  cursor: pointer;
-  background-color: #F5F6FA;
-  display: none;
+	cursor: pointer;
+	background-color: #F5F6FA;
+	display: none;
 }
+
 .wtechtec-opt-item {
-  padding: 12px 4px;
-  flex: 1;
+	padding: 12px 4px;
+	flex: 1;
 }
+
 .wtechtec-opt-item:hover {
-  color: #265CF0;
-  background-color: rgba(38,92,240, 0.08);
+	color: #265CF0;
+	background-color: rgba(38, 92, 240, 0.08);
 }
+
 .wtechtec-opt-item.active {
-  color: #265CF0;
-  background-color: rgba(38,92,240, 0.1);
-  font-weight: bold;
+	color: #265CF0;
+	background-color: rgba(38, 92, 240, 0.1);
+	font-weight: bold;
 }
 
 .wtc-tools_content {
@@ -32,6 +35,35 @@
 	top: 50px !important;
 	left: 0 !important;
 	user-select: none;
-  z-index: 9999;
-  outline: none;
+	z-index: 9999;
+	outline: none;
+}
+
+.wtc_diaglog {
+	position: fixed;
+	z-index: 9999999;
+	top: 50px;
+	display: none;
+	background-color: #f2f2f2;
+	width: 500px;
+	height: 650px;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 10px;
+}
+
+.btn_close {
+	cursor: pointer;
+	font-size: 16px;
+	color: #666666;
+}
+
+.btn_close:hover {
+	color: #265CF0;
+}
+
+.desc {
+	font-size: 24px;
+	font-weight: bold;
+	color: #333333;
 }

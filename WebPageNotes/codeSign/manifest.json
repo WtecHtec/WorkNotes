@@ -22,25 +22,28 @@
 			],
 			"js": [
 				"js/libs/html2canvas.js",
+				"js/libs/beautify-css.min.js",
+				"js/libs/beautify-html.min.js",
+				"js/libs/highlight.min.js",
 				"js/libs/fabric.min.js",
 				"js/libs/jquery.min.js",
-        "js/src/units/color.js",
-        "js/src/units/tools.js",
+				"js/src/units/color.js",
+				"js/src/units/tools.js",
 				"js/src/units/dom-ui.js",
-        "js/src/atom/base.js",
-        "js/src/atom/gather.js",
-        "js/src/atom/format.js",
-        "js/src/atom/atom.js",
+				"js/src/atom/base.js",
+				"js/src/atom/gather.js",
+				"js/src/atom/format.js",
+				"js/src/atom/atom.js",
 				"js/src/global.js",
-        "js/src/top-opt/config.js",
-        "js/src/top-opt/view.js",
+				"js/src/top-opt/config.js",
+				"js/src/top-opt/view.js",
 				"js/src/top-opt/dom.js",
 				"js/src/top-opt/event.js",
 				"js/src/top-opt/index.js",
-        "js/src/form-view/temp.js",
-        "js/src/form-view/dom.js",
-        "js/src/form-view/event.js",
-        "js/src/form-view/index.js",
+				"js/src/form-view/temp.js",
+				"js/src/form-view/dom.js",
+				"js/src/form-view/event.js",
+				"js/src/form-view/index.js",
 				"js/src/fabrictool/config-data.js",
 				"js/src/fabrictool/draws/arrow.js",
 				"js/src/fabrictool/draws/rect.js",
@@ -51,16 +54,17 @@
 			],
 			"css": [
 				"css/wtechtec-loading.css",
-        "css/wtechtec-form.css",
-				"css/wtechtec.css"
+				"css/wtechtec-form.css",
+				"css/wtechtec.css",
+				"css/atom-one-dark.min.css"
 			],
 			"run_at": "document_end"
 		}
 	],
 	"permissions": [
-    "tabs",
+		"tabs",
 		"activeTab",
-    "scripting"
+		"scripting"
 	],
 	"web_accessible_resources": [
 		{
