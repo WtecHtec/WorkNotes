@@ -3,8 +3,7 @@ function initOptEvent() {
 		const targetDom = $(e.target);
 		const id = targetDom.attr('id');
 		if (id === 'wtc_save') {
-      const datas = Object.values(g_form_data_map);
-      console.log('g_form_data_map====',formatArrayToTree(datas), g_form_data_map)
+      createView();
 			return;
 		}
 		$('.wtechtec-opt-item.active').removeClass('active');

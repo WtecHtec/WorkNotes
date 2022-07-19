@@ -33,6 +33,7 @@
         "js/src/atom/atom.js",
 				"js/src/global.js",
         "js/src/top-opt/config.js",
+        "js/src/top-opt/view.js",
 				"js/src/top-opt/dom.js",
 				"js/src/top-opt/event.js",
 				"js/src/top-opt/index.js",

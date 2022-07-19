@@ -5,7 +5,9 @@ function initFormData() {
   if (formData) {
     $('#wtc_dom_id').val(formData.domId);
     $('#wtc_parent_id').val(formData.parentId);
+    $('#wtc_class_name').val(formData.className);
     $('#wtc_style_content').val(formData.style);
+    $('#wtc_rank_num').val(formData.rankNum);
   }
 }
 function initFormEvent() {
@@ -15,6 +17,8 @@ function initFormEvent() {
     if (formData) {
       formData.parentId = $('#wtc_parent_id').val();
       formData.style = $('#wtc_style_content').val();
+      formData.className = $('#wtc_class_name').val();
+      formData.rankNum = $('#wtc_rank_num').val();
     }
   })
 }

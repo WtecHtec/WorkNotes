@@ -48,6 +48,8 @@ function drawing(canvas) {
       domId: String(g_dom_id),
       parentId: '',
       style: '',
+      className: '',
+      rankNum: 0,
     }
 		if (['arrow', 'rect'].indexOf(g_fc_drawType) !== -1) {
 			g_fc_drawingObject = canvasObject;

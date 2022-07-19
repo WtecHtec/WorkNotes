@@ -30,3 +30,7 @@ function createFragment() {
 	const fragment = document.createDocumentFragment();
 	return $(fragment);
 }
+
+function createWxView() {
+	return $('<view></view>');
+}
