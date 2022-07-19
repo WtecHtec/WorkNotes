@@ -10,6 +10,7 @@ function handleMouseDown(canvas) {
 		g_fc_mouseFrom.y = xy.y;
 		g_fc_doDrawing = true;
 		g_fc_color = randomColor();
+    g_dom_id = g_dom_id + 1;
 	});
 }
 function handleMouseUp(canvas, drawing) {
@@ -43,7 +44,12 @@ function handleMouseMove(canvas, drawing) {
 }
 function handleSelectionCreated(canvas) {
 	canvas.on("selection:created", function (e) {
-		if (g_select_status) return
+    g_fc_currentSelectObject = e;
+		if (g_select_status && g_fc_currentSelectObject.selected.length === 1)  {
+      $('#wtc_form_content').show();
+      initFormData();
+      return;
+    }
 		if (g_fc_drawType === 'remove') {
 			if (e.target._objects) {
 				if (e.target.type === 'group') {
@@ -72,3 +78,25 @@ function handleSelectionCreated(canvas) {
 		}
 	});
 }
+
+function handleSelectUpdate(canvas) {
+  canvas.on("selection:updated", function (e) { 
+    g_fc_currentSelectObject = e;
+		if (g_select_status && g_fc_currentSelectObject.selected.length === 1)  {
+      $('#wtc_form_content').show();
+      initFormData();
+      return;
+    }
+  });
+}
+
+function handleSelectCleared(canvas) {
+  canvas.on("before:selection:cleared", function (e) { 
+    g_fc_currentSelectObject = null
+		if (g_select_status)  {
+      $('#wtc_form_content').hide();
+      return;
+    }
+  });
+}
+

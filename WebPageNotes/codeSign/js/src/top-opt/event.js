@@ -3,7 +3,8 @@ function initOptEvent() {
 		const targetDom = $(e.target);
 		const id = targetDom.attr('id');
 		if (id === 'wtc_save') {
-
+      const datas = Object.values(g_form_data_map);
+      console.log('g_form_data_map====',formatArrayToTree(datas), g_form_data_map)
 			return;
 		}
 		$('.wtechtec-opt-item.active').removeClass('active');
@@ -11,6 +12,7 @@ function initOptEvent() {
 		if (id === 'wtc_make') {
 			g_fc_drawType = 'rect';
 			g_fc_doDrawing = true
+      $('#wtc_form_content').hide();
 			if (g_fabric_canvas) {
 				g_fc_mouseFrom = {};
 				g_making = !g_making;
@@ -34,7 +36,7 @@ function initOptEvent() {
 			g_fabric_canvas.selection = true;
 			g_fabric_canvas.skipTargetFind = false;
 			g_fabric_canvas.selectable = true;
-		}
+		} 
 		requestAnimationFrame(() => {
 			targetDom.addClass('active');
 			$('#hz_loading').hide();

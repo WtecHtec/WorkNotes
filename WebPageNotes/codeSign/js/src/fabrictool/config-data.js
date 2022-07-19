@@ -10,3 +10,5 @@ let g_fc_canvasObjectIndex = 0
 let g_fc_textbox = null
 let g_fc_out_drawtypes = ['text', 'serial']
 let g_fc_serial_num = 0
+let g_fc_currentSelectObject = null;
+let g_dom_id = 0

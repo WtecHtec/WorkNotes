@@ -16,7 +16,11 @@ function createCanvas() {
 		id: 'wtc_canvas',
 		width: bodyEl.width() + 'px',
 		height: bodyEl.height() + 'px',
+    tabIndex: -1
 	})
+  canvasEl.css({
+    display: 'none',
+  });
 	return canvasEl;
 }
 
@@ -29,8 +33,9 @@ function renderOptDom() {
   })
 	const loadingEl = createLoadingEl();
 	const fargment = createFragment();
+  const canvasDiv = createCanvas();
 	fargment.append(parentDom);
 	fargment.append(loadingEl);
-	fargment.append(createCanvas());
+	fargment.append(canvasDiv);
 	$('body').append(fargment);
 }

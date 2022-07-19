@@ -13,8 +13,7 @@
 	},
 	"action": {
 		"default_icon": "img/icon/icon.png",
-		"default_title": "描边大师",
-		"default_popup": "popup.html"
+		"default_title": "描边大师"
 	},
 	"content_scripts": [
 		{
@@ -26,12 +25,17 @@
 				"js/libs/fabric.min.js",
 				"js/libs/jquery.min.js",
         "js/src/units/color.js",
+        "js/src/units/tools.js",
 				"js/src/units/dom-ui.js",
 				"js/src/global.js",
         "js/src/top-opt/config.js",
 				"js/src/top-opt/dom.js",
 				"js/src/top-opt/event.js",
 				"js/src/top-opt/index.js",
+        "js/src/form-view/temp.js",
+        "js/src/form-view/dom.js",
+        "js/src/form-view/event.js",
+        "js/src/form-view/index.js",
 				"js/src/fabrictool/config-data.js",
 				"js/src/fabrictool/draws/arrow.js",
 				"js/src/fabrictool/draws/rect.js",
@@ -42,13 +46,16 @@
 			],
 			"css": [
 				"css/wtechtec-loading.css",
+        "css/wtechtec-form.css",
 				"css/wtechtec.css"
 			],
 			"run_at": "document_end"
 		}
 	],
 	"permissions": [
-		"activeTab"
+    "tabs",
+		"activeTab",
+    "scripting"
 	],
 	"web_accessible_resources": [
 		{

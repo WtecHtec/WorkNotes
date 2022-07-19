@@ -1,0 +1,4 @@
+function initForm() {
+  initFormDom();
+  initFormEvent();
+}

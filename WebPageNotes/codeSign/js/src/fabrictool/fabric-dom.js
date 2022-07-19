@@ -1,6 +1,7 @@
 function initFabricCanvas() {
 	if (g_fabric_canvas) return;
 	//初始化画板
+  $('#wtc_canvas').show();
 	g_fabric_canvas = new fabric.Canvas('wtc_canvas', {
 		isDrawingMode: false,
 		skipTargetFind: true,
@@ -15,10 +16,17 @@ function initFabricCanvas() {
 	handleMouseUp(g_fabric_canvas, drawing)
 	handleMouseMove(g_fabric_canvas, drawing)
 	handleSelectionCreated(g_fabric_canvas)
+  handleSelectUpdate(g_fabric_canvas);
+  handleSelectCleared(g_fabric_canvas);
+  setTimeout(()=> {
+    $('.wtc-tools_content').attr({
+      tabIndex: -1
+    });
+    handleRmoveByCode()
+  }, 0)
 }
 function checkXY(mouseFrom, mouseTo) {
 	if (mouseFrom && mouseTo) {
-		console.log(mouseFrom, mouseTo)
 		return mouseFrom.x === mouseTo.x && mouseFrom.y === mouseTo.y;
 	}
 	return true;
@@ -34,8 +42,48 @@ function drawing(canvas) {
 	}
 	if (canvasObject) {
 		canvas.add(canvasObject);
+    console.log('g_dom_id===', g_dom_id)
+    // 新建一个数据对象
+    g_form_data_map[g_dom_id] = {
+      domId: String(g_dom_id),
+      parentId: '',
+      style: '',
+    }
 		if (['arrow', 'rect'].indexOf(g_fc_drawType) !== -1) {
 			g_fc_drawingObject = canvasObject;
 		}
 	}
+}
+
+function handleRmoveByCode() {
+  $('.wtc-tools_content').bind('keyup', (event)=> {
+    if (event.keyCode == 8 && g_fc_currentSelectObject) {
+      removeObject(g_fabric_canvas, g_fc_currentSelectObject);
+      g_fc_currentSelectObject = null;
+    }
+  })
+}
+
+function removeObject(canvas, e) {
+  if (e.target._objects) {
+    if (e.target.type === 'group') {
+      e.target._restoreObjectsState();
+    }
+    //多选删除
+    let etCount = e.target._objects.length;
+    requestAnimationFrame(() => {
+      for (let etindex = 0; etindex < etCount; etindex++) {
+        delete g_form_data_map[e.target._objects[etindex].domId];
+        canvas.remove(e.target._objects[etindex]);
+      }
+      canvas.remove(e.target);
+    })
+  } else {
+    //单选删除
+    delete g_form_data_map[e.target.domId];
+    requestAnimationFrame(() => {
+      canvas.remove(e.target);
+    })
+  }
+  canvas.discardActiveObject().renderAll(); //清楚选中框
 }

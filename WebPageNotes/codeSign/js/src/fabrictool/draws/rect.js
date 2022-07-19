@@ -20,6 +20,7 @@ function drawRect(canvas, mouseFrom, mouseTo, color, drawWidth) {
 		stroke: color,
 		fill: color,
 		strokeWidth: drawWidth,
+    domId: String(g_dom_id),
 	});
 	return canvasObject;
 }

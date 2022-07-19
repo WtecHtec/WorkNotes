@@ -2,7 +2,7 @@
   width: 220px;
 	position: fixed;
 	top: 0;
-	right: 0;
+	right: 35px;
 	border: 1px solid #265CF0;
 	display: flex;
 	justify-content: space-between;
@@ -11,6 +11,7 @@
 	text-align: center;
   cursor: pointer;
   background-color: #F5F6FA;
+  display: none;
 }
 .wtechtec-opt-item {
   padding: 12px 4px;
@@ -32,4 +33,5 @@
 	left: 0 !important;
 	user-select: none;
   z-index: 9999;
+  outline: none;
 }
