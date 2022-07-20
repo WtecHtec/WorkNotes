@@ -42,7 +42,6 @@ function drawing(canvas) {
 	}
 	if (canvasObject) {
 		canvas.add(canvasObject);
-    console.log('g_dom_id===', g_dom_id)
     // 新建一个数据对象
     g_form_data_map[g_dom_id] = {
       domId: String(g_dom_id),
@@ -50,6 +49,7 @@ function drawing(canvas) {
       style: '',
       className: '',
       rankNum: 0,
+      afterContent: '',
     }
 		if (['arrow', 'rect'].indexOf(g_fc_drawType) !== -1) {
 			g_fc_drawingObject = canvasObject;

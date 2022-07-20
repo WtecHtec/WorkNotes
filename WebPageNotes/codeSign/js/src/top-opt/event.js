@@ -20,7 +20,6 @@ function initOptEvent() {
 				g_fabric_canvas.selection = false;
 				g_fabric_canvas.skipTargetFind = true;
 				g_fabric_canvas.selectable = false;
-				console.log(g_fabric_canvas)
 				g_fabric_canvas.discardActiveObject().renderAll(); //清楚选中框
 			} else {
 				g_making = true;
@@ -37,7 +36,9 @@ function initOptEvent() {
 			g_fabric_canvas.selectable = true;
 		} 
 		requestAnimationFrame(() => {
-			targetDom.addClass('active');
+      if (!(id === 'wtc_make' && !g_making)) {
+        targetDom.addClass('active');
+      }
 			$('#hz_loading').hide();
 		})
 	});

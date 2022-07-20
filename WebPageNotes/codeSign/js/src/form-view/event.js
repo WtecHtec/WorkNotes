@@ -8,10 +8,12 @@ function initFormData() {
 		$('#wtc_class_name').val(formData.className);
 		$('#wtc_style_content').val(formData.style);
 		$('#wtc_rank_num').val(formData.rankNum);
+    $('#wtc_after_content').val(formData.afterContent);
 	}
 }
 function initFormEvent() {
 	$('#wtc_save_form_btn').on('click', () => {
+    $('#hz_loading').show();
 		const domId = $('#wtc_dom_id').val();
 		const formData = g_form_data_map[domId];
 		if (formData) {
@@ -19,7 +21,11 @@ function initFormEvent() {
 			formData.style = $('#wtc_style_content').val();
 			formData.className = $('#wtc_class_name').val();
 			formData.rankNum = $('#wtc_rank_num').val();
+      formData.afterContent = $('#wtc_after_content').val();
 		}
+    setTimeout(()=> {
+      $('#hz_loading').hide();
+    }, 200);
 	})
 	$('#wtc_close_btn').on('click', () => {
 		$('.wtc_diaglog').hide();

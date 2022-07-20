@@ -1,6 +1,6 @@
 {
 	"manifest_version": 3,
-	"name": "Notes Canvas",
+	"name": "codesign Canvas",
 	"version": "1.2.0",
 	"description": "描边大师",
 	"icons": {
@@ -21,7 +21,6 @@
 				"<all_urls>"
 			],
 			"js": [
-				"js/libs/html2canvas.js",
 				"js/libs/beautify-css.min.js",
 				"js/libs/beautify-html.min.js",
 				"js/libs/highlight.min.js",
@@ -33,6 +32,7 @@
 				"js/src/atom/base.js",
 				"js/src/atom/gather.js",
 				"js/src/atom/format.js",
+        "js/src/atom/style-mixin.js",
 				"js/src/atom/atom.js",
 				"js/src/global.js",
 				"js/src/top-opt/config.js",

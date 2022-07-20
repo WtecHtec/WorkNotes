@@ -4,7 +4,7 @@
  * @param {*} value
  * @returns
  */
- function getAtomCss(prop, value) {
+ function getAtomCss(atomMap, prop, value) {
   if (!atomMap[prop]) return null;
   return atomMap[prop][value] || null;
 }
@@ -112,16 +112,35 @@ function getCssNodesByStyle(styleContent) {
       if (item) {
         const nodes = item.split(':');
         if (nodes.length === 2 && nodes[0] && nodes[1]) {
-          result.push({
-            prop: nodes[0].trim(),
-            value: nodes[0].trim(),
-          })
+          // 处理mixin的情况
+          if (STYLE_MIXIN[nodes[0]] && typeof STYLE_MIXIN[nodes[0]] === 'function') {
+            const cssStr =  STYLE_MIXIN[nodes[0]](...nodes[1].split(','));
+            if (cssStr) {
+              const mixinDatas = cssStr.split(';')
+              mixinDatas.forEach(mItem => {
+                const minxinNodes = mItem.split(':');
+                if (minxinNodes.length === 2 && minxinNodes[0] && minxinNodes[1]) { 
+                  result.push({
+                    prop: minxinNodes[0].trim(),
+                    value: minxinNodes[1].trim(),
+                  })
+                }
+              })
+            }
+          } else {
+            result.push({
+              prop: nodes[0].trim(),
+              value: nodes[1].trim(),
+            })
+          }
         }
       }
     })
   }
   return result;
 }
+
+
 
 function formatStyles(datas) {
   const nodeMap = {};
