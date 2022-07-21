@@ -69,3 +69,16 @@
 	font-weight: bold;
 	color: #333333;
 }
+
+.CodeMirror-hints {
+  z-index: 9999999999999999999999999999999;
+}
+#cm-complete-0 {
+  z-index: 9999999999999999999999999999999;
+}
+.wtc-code-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 99;
+}

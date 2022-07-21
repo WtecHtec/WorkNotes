@@ -106,8 +106,8 @@ function dealMarginPaddingValue(prop, value) {
  */
 function getCssNodesByStyle(styleContent) {
   const result = [];
-  if (styleContent) {
-    const datas = styleContent.split(';')
+  if (styleContent && styleContent[0] === '{' && styleContent[styleContent.length - 1] === '}') {
+    const datas = styleContent.substring(1, styleContent.length - 2).split(';')
     datas.forEach(item => {
       if (item) {
         const nodes = item.split(':');
@@ -122,7 +122,7 @@ function getCssNodesByStyle(styleContent) {
                 if (minxinNodes.length === 2 && minxinNodes[0] && minxinNodes[1]) { 
                   result.push({
                     prop: minxinNodes[0].trim(),
-                    value: minxinNodes[1].trim(),
+                    value: htmlDecodeByRegExp(minxinNodes[1].trim()),
                   })
                 }
               })
@@ -130,7 +130,7 @@ function getCssNodesByStyle(styleContent) {
           } else {
             result.push({
               prop: nodes[0].trim(),
-              value: nodes[1].trim(),
+              value: htmlDecodeByRegExp(nodes[1].trim()) ,
             })
           }
         }

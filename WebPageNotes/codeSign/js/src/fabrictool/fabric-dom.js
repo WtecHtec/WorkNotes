@@ -64,6 +64,16 @@ function handleRmoveByCode() {
       g_fc_currentSelectObject = null;
     }
   })
+  // $('.screen-viewer__wrapper').unbind('keyup')
+  // $('.screen-viewer').unbind('keydown')
+  // $('.screen-viewer').bind('keyup', (e)=> {
+  //   window.event? window.event.cancelBubble = true : e.stopPropagation();
+  // })
+  // $('.screen-viewer').css('display', 'none');
+  // $(window).unbind('keyup')
+  // window.removeEventListener('keydown');
+  // function onDocumentKeydown() {};
+  // document.removeEventListener('keydown', onDocumentKeydown);
 }
 
 function removeObject(canvas, e) {

@@ -21,6 +21,10 @@
 				"<all_urls>"
 			],
 			"js": [
+        "js/libs/codemirror/lib/codemirror.js",
+        "js/libs/codemirror/mode/css.js",
+        "js/libs/codemirror/addon/show-hint.js",
+        "js/libs/codemirror/addon/css-hint.js",
 				"js/libs/beautify-css.min.js",
 				"js/libs/beautify-html.min.js",
 				"js/libs/highlight.min.js",
@@ -56,7 +60,9 @@
 				"css/wtechtec-loading.css",
 				"css/wtechtec-form.css",
 				"css/wtechtec.css",
-				"css/atom-one-dark.min.css"
+				"css/atom-one-dark.min.css",
+        "js/libs/codemirror/lib/codemirror.css",
+        "js/libs/codemirror/addon/show-hint.css"
 			],
 			"run_at": "document_end"
 		}

@@ -7,4 +7,12 @@ function initFormDom() {
 	freameDiv.append(parentDiv);
 	freameDiv.append(diaglogDom);
 	$('body').append(freameDiv);
+  setTimeout(()=> {
+    g_form_style_editor || (g_form_style_editor = CodeMirror.fromTextArea(document.getElementById("wtc_style_content"), {
+      extraKeys: {"Ctrl": "autocomplete"}
+    }));
+    g_form_after_editor || (g_form_after_editor = CodeMirror.fromTextArea(document.getElementById("wtc_after_content"), {
+      extraKeys: {"Ctrl": "autocomplete"}
+    }));
+  }, 0);
 }

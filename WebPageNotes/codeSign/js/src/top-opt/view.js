@@ -10,8 +10,9 @@ function createView() {
 		createDom(tree, parentDom, cssData);
 		$('.wtc_diaglog').show();
 		setTimeout(() => {
-			const html = parentDom.html();
-			$('#html_code').text(html_beautify(html, be_config));
+			const html = htmlDecodeByRegExp( parentDom.html());
+      console.log(html_beautify(html , be_config), html)
+			$('#html_code').text(html_beautify(html , be_config));
       if (Object.keys(cssData).length) {
         const css = Object.values(cssData);
         css.length && $('#css_code').text(css_beautify(css.join(''), be_config));
@@ -20,7 +21,6 @@ function createView() {
       setTimeout(()=> {
         $('#hz_loading').hide();
       }, 200);
-			
 		}, 0)
 	}
 }

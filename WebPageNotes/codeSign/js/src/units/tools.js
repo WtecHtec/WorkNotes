@@ -20,3 +20,19 @@ function formatArrayToTree(data, idKey = 'domId', parentKey = 'parentId') {
   });
   return result;
 }
+/**
+ * javascript处理HTML的Decode(解码)
+ * @param {*} str 
+ * @returns 
+ */
+function htmlDecodeByRegExp (str){  
+  var s = "";
+  if(!str || str.length == 0) return "";
+  s = str.replace(/&amp;/g,"&");
+  s = s.replace(/&lt;/g,"<");
+  s = s.replace(/&gt;/g,">");
+  s = s.replace(/&nbsp;/g," ");
+  s = s.replace(/&#39;/g,"\'");
+  s = s.replace(/&quot;/g,"\"");
+  return s;  
+}
