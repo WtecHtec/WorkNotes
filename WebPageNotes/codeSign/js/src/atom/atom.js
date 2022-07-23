@@ -114,8 +114,8 @@ function getCssNodesByStyle(styleContent) {
 				const nodes = item.split(':');
 				if (nodes.length === 2 && nodes[0] && nodes[1]) {
 					// 处理mixin的情况
-					if (STYLE_MIXIN[nodes[0]] && typeof STYLE_MIXIN[nodes[0]] === 'function') {
-						const cssStr = STYLE_MIXIN[nodes[0]](...nodes[1].split(','));
+					if (STYLE_MIXIN[nodes[0].trim()] && typeof STYLE_MIXIN[nodes[0].trim()] === 'function') {
+						const cssStr = STYLE_MIXIN[nodes[0].trim()](...nodes[1].split(','));
 						if (cssStr) {
 							const mixinDatas = cssStr.split(';')
 							mixinDatas.forEach(mItem => {
