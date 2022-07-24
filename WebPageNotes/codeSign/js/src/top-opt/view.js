@@ -75,6 +75,9 @@ function createDom(data, parentDom, cssData) {
 			if (atomCss.length) {
 				dom.attr('class', atomCss.join(' '));
 			}
+			if (item.viewContent) {
+				dom.text(item.viewContent);
+			}
 			parentDom.append(dom);
 			if (item.children && item.children.length) {
 				createDom(item.children, dom, cssData)

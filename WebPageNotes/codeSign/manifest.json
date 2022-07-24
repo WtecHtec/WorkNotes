@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "codesign Canvas",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"description": "描边大师",
 	"icons": {
 		"16": "img/icon/icon.png",
@@ -21,10 +21,10 @@
 				"<all_urls>"
 			],
 			"js": [
-        "js/libs/codemirror/lib/codemirror.js",
-        "js/libs/codemirror/mode/css.js",
-        "js/libs/codemirror/addon/show-hint.js",
-        "js/libs/codemirror/addon/css-hint.js",
+				"js/libs/codemirror/lib/codemirror.js",
+				"js/libs/codemirror/mode/css.js",
+				"js/libs/codemirror/addon/show-hint.js",
+				"js/libs/codemirror/addon/css-hint.js",
 				"js/libs/beautify-css.min.js",
 				"js/libs/beautify-html.min.js",
 				"js/libs/highlight.min.js",
@@ -36,7 +36,7 @@
 				"js/src/atom/base.js",
 				"js/src/atom/gather.js",
 				"js/src/atom/format.js",
-        "js/src/atom/style-mixin.js",
+				"js/src/atom/style-mixin.js",
 				"js/src/atom/atom.js",
 				"js/src/global.js",
 				"js/src/top-opt/config.js",
@@ -61,8 +61,8 @@
 				"css/wtechtec-form.css",
 				"css/wtechtec.css",
 				"css/atom-one-dark.min.css",
-        "js/libs/codemirror/lib/codemirror.css",
-        "js/libs/codemirror/addon/show-hint.css"
+				"js/libs/codemirror/lib/codemirror.css",
+				"js/libs/codemirror/addon/show-hint.css"
 			],
 			"run_at": "document_end"
 		}
