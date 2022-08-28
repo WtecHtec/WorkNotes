@@ -1,0 +1,14 @@
+<view >
+	<view wx:if="{{!licImage}}" class="no-lic" bindtap="onChooseLic" >
+		上传驾照
+	</view>
+	<view wx:else>
+		<view class="lic-img">
+			<image src="{{licImage}}" class="wapp-image" mode="aspectFill" />
+		</view>
+		<view class="opt-content">
+			<button wx:if="{{status === 'NONE'}}" bindtap="onSubit" type="primary" size="mini">提交审核</button>
+			<button wx:if="{{status === 'PENDING'}}" disabled="true" type="primary" size="mini">审核中</button>
+		</view>
+	</view>
+</view>

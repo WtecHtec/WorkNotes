@@ -1,0 +1,21 @@
+.content {
+	padding-top: 24rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	height: 100vh;
+	box-sizing: border-box;
+}
+.icon {
+	width: 400rpx;
+	height: 400rpx;
+}
+.desc {
+	flex: 1;
+}
+.desc .txt {
+	text-align: center;
+}
+.ft-content {
+	flex: 1;
+}

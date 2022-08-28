@@ -1,0 +1,23 @@
+.no-lic {
+	width: 600rpx;
+	height: 600rpx;
+	margin-top: 24rpx;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-left: 76rpx;
+	border-radius: 8rpx;
+	color: #fff;
+	background-color: rgba(0, 0, 0, .7);
+}
+.lic-img {
+	width: 600rpx;
+	height: 600rpx;
+	margin-left: 76rpx;
+	margin-top: 24rpx;
+}
+
+.opt-content {
+	text-align: center;
+	margin-top: 12rpx;
+}

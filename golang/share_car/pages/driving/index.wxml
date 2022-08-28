@@ -1,0 +1,8 @@
+<view class="content">
+	<view class="order-content">
+		<view class="time"> {{showTime}}</view>
+		<view class="money"> 费用：{{showMoney}}元 </view>
+		<button type="warn" bindtap="onEndDire" disabled="{{isEnd}}" >结束行程</button>
+	</view>
+	<map id="map" class="map" latitude="{{latitude}}" longitude="{{longitude}}" show-location scale="{{scale}}" />
+</view>

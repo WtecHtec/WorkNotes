@@ -1,0 +1,12 @@
+<view class="content">
+	<view class="icon" >
+		<image src="/assets/images/car.png" class="wapp-image" mode="aspectFill" />
+	</view>
+	<view class="desc">
+		<view class="txt"> 驾驶安全是用户的责任</view>
+		<view class="txt"> 请将车辆停放在正确的车位内</view>
+	</view>
+	<view class="ft-content">
+		<button bindtap="onUnlock" type="primary" size="mini">立即开锁</button>
+	</view>
+</view>

@@ -1,0 +1,23 @@
+.content {
+	width: 100%;
+	height: 100vh;
+	display: flex;
+	flex-direction: column-reverse;
+}
+.map {
+	width: 100%;
+	flex: 1;
+}
+.order-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 32rpx 0;
+}
+.time {
+	font-size: 36rpx;
+	font-weight: bold;
+}
+.money {
+	margin: 12rpx 0;
+}
