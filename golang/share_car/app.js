@@ -1,2 +1,6 @@
 // app.js
-App({})
+App({
+  onLaunch (options) {
+    // Do something initial when launch.
+  },
+})

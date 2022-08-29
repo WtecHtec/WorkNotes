@@ -1,6 +1,7 @@
 <map id="map"  class="map-content" latitude="{{latitude}}" longitude="{{longitude}}" markers="{{markers}}">
 	<cover-view class="nav">
-    <cover-image class="nav-img" src="/assets/images/person.png" ></cover-image>
+    <cover-image wx:if="{{!avatarUrl}}" class="nav-img" src="/assets/images/person.png" ></cover-image>
+    <cover-image wx:else class="nav-img" src="{{avatarUrl}}" ></cover-image>
     <cover-image bindtap="onCurpostion" class="nav-img" src="/assets/images/postion.png" ></cover-image>
   </cover-view>
 	<cover-view class="ft-content" bindtap="onScanUse" >

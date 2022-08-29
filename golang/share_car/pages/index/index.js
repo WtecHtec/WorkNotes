@@ -14,11 +14,13 @@ const setting = {
   enableOverlooking: false,
   enableSatellite: false,
   enableTraffic: false,
-	latitude:  22.55329,
-	longitude: 113.88308,
+
 }
 Page({
 	data: {
+    avatarUrl: null,
+    latitude:  22.55329,
+    longitude: 113.88308,
 		markers: [
 			{
 				id: 1,
@@ -32,7 +34,20 @@ Page({
 	},
 	onLoad() {
 		this.onCurpostion('init');
+    this.loadAvatarUrl();
+    // this.updateMaker();
 	},
+  loadAvatarUrl( ) {
+    wx.getUserInfo({
+      success: (res) => {
+        var userInfo = res.userInfo
+        console.log(userInfo)
+        this.setData({
+          avatarUrl: userInfo.avatarUrl,
+        })
+      }
+    })
+  },
 	onCurpostion(type) {
 		wx.getLocation({
       type:'gcj02',
@@ -66,5 +81,27 @@ Page({
 						url: '/pages/unlock/index',})
 			}
 		})
-	}
+	},
+  updateMaker() {
+    const mapContext = wx.createMapContext('map')
+    let { longitude, latitude} = this.data;
+    console.log(longitude, latitude)
+    const update = () => {
+      longitude =  longitude + 1
+      latitude = latitude + 1
+      mapContext.translateMarker({
+        markerId: 1,
+        destination: {
+          longitude,
+          latitude,
+        },
+        duration: 2000,
+        animationEnd: ()=> {
+
+          update()
+        }
+      })
+    }
+    update()
+  }
 })

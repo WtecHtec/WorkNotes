@@ -21,6 +21,7 @@ page {
 	width: 64rpx;
 	height: 64rpx;
 	opacity: .6;
+  border-radius: 50%;
 }
 
 .ft-content {
