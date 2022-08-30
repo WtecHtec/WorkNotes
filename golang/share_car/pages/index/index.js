@@ -1,4 +1,4 @@
-// index.js
+import { LOCATIONS } from "../../mock/divre_data";
 const setting = {
   skew: 0,
   rotate: 0,
@@ -35,7 +35,7 @@ Page({
 	onLoad() {
 		this.onCurpostion('init');
     this.loadAvatarUrl();
-    // this.updateMaker();
+    this.updateMaker();
 	},
   loadAvatarUrl( ) {
     wx.getUserInfo({
@@ -85,10 +85,10 @@ Page({
   updateMaker() {
     const mapContext = wx.createMapContext('map')
     let { longitude, latitude} = this.data;
-    console.log(longitude, latitude)
-    const update = () => {
-      longitude =  longitude + 1
-      latitude = latitude + 1
+    console.log(longitude, latitude, LOCATIONS)
+    const update = (i) => {
+      latitude = LOCATIONS[i][0]
+      longitude =  LOCATIONS[i][1]
       mapContext.translateMarker({
         markerId: 1,
         destination: {
@@ -97,11 +97,10 @@ Page({
         },
         duration: 2000,
         animationEnd: ()=> {
-
-          update()
+          i < LOCATIONS.length && update( i + 1)
         }
       })
     }
-    update()
+    update(0)
   }
 })
