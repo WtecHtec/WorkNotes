@@ -19,3 +19,4 @@
 17. wx-set-appid --- 微信小程序修改appid工具
 18. web-note-canvas --- 谷歌浏览器插件笔记
 19. FuncJsRay --- eval 运行时间限制
+20. go_makemask --- go 图片添加水印
