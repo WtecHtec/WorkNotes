@@ -1,0 +1,5 @@
+{
+  "usingComponents": {
+    "w-c": "/components/word-cloud/index"
+  }
+}

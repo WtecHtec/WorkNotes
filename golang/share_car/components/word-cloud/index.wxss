@@ -1,0 +1,16 @@
+/* components/word-cloud/index.wxss */
+
+.wc-canvas {
+  display: none;
+  position: absolute;
+  z-index: -1;
+}
+.wc-main {
+  position: relative;
+}
+.wc-item {
+  white-space: nowrap;
+  position: absolute;
+  display: block;
+  transform-origin: 50% 40%;
+}

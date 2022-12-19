@@ -1,0 +1,6 @@
+<canvas type="2d" id="myCanvas" class="wc-canvas"></canvas>
+<view class="wc-main" style="width: {{ width ? width + 'px' : '100%' }};height: {{ height }}px; background-color: {{bgColor || '#fff'}};">
+  <block wx:for="{{wordData}}" wx:key="index">
+    <text class="wc-item"  style="top:{{item.top}}rpx;left:{{ item.left }}rpx; transform:{{item.transform}};lineHeight:{{item.fontSize}}rpx;font:{{item.font}};color:{{item.color}};" catchtap="bindWord" data-detail="{{item}}" >{{ item.word }} </text>
+  </block>
+</view>
