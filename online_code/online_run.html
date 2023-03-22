@@ -1,0 +1,53 @@
+<html>
+<!DOCTYPE />
+
+<head>
+  <meta charset="UTF-8">
+  <title>在线运行代码</title>
+  <meta name="author" content="gjf_xing.org1^" />
+  <meta name="Description" content="在线运行代码的小工具" />
+  <meta name="Keywords" content="小工具，代码运行，运行代码，open方法，新页面，在线调试" />
+</head>
+
+<body>
+  <textarea name="" rows="13" cols="80" id="txt"></textarea>
+
+  <input type="button" name="" id="btn" value="运行代码" />
+  <iframe src="./proxy_iframe.html" id="resultsFrame" ></iframe>
+</body>
+
+<script type="text/javascript">
+  const runBtn = document.getElementById('btn')
+  const frame = document.getElementById('resultsFrame')
+  console.log('frame==', frame.contentWindow.document)
+  runBtn.addEventListener('click', () => {
+    const jsDomId = 'result_js'
+    const injected_script = `
+    //<![CDATA[
+
+
+   ${document.getElementById('txt').value}
+    
+    
+    //]]>`;
+    const idocument = frame.contentWindow.document
+    let el = idocument.getElementById(jsDomId)
+    el = el || idocument.createElement('script');
+    el.id = jsDomId
+    el.text = injected_script;
+    idocument.body.appendChild(el);
+  })
+
+  window.addEventListener('message', function (e) {
+    console.error('message===', e.data)
+  // try {
+  //   let data = JSON.parse(e.data)
+    
+  // } catch (error) {
+  //   console.log(error)
+  // }
+})
+ 
+</script>
+
+</html>
