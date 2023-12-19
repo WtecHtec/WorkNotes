@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>test</title>
+  <meta name="applicable-device" content="mobile">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta id="viewport" name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
+  <link href="./style.css"  rel="stylesheet"/>
+  <style>
+    .tst {
+      margin-top: 2px;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: 40px;
+    }
+    .tst>p {
+      margin: 5px 0 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div>支持 svg</div>
+  <svg width="100" height="100">
+    <circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" />
+  </svg>
+  <div>这是个div</div>
+  <div>支持 transform</div>
+  <div style="transform: scale(0.5, 0.5)">这是个transform: scale(0.5, 0.5) 的 div</div>
+  <div>支持 list 多选</div>
+  <div>
+    <div class="tst">
+      <p>list</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+    <div class="tst">
+      <p>title</p>
+      <p>name</p>
+    </div>
+  </div>
+  <img style="width: 100px" src="https://t7.baidu.com/it/u=4198287529,2774471735&fm=193&f=GIF"><img>
+  <div style="position: fixed; right: 0; top: 0; text-align: right;">
+    <button onClick="pause()">window.inspector.pause()</button>
+    <button onClick="enable()">window.inspector.enable()</button>
+    <button onClick="enable('multi')">window.inspector.enable('multi')</button>
+  </div>
+  <script src="./utils.js"></script>
+  <script src="./xpath.js"></script>
+  <script src="./dom.js"></script>
+  <script src="./index.js"></script>
+</body>
+</html>
