@@ -1,5 +1,6 @@
 {
 	"diffEditor.ignoreTrimWhitespace": false,
 	"editor.tabSize": 2,
-	"editor.detectIndentation": false
+  "editor.detectIndentation": false,
+  "liveServer.settings.port": 5503
 }

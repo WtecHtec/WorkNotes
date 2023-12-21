@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <img id="sliders" src="https://www.gstatic.com/android/keyboard/emojikitchen/20201001/u1f914/u1f914_u1f616.png" />
+  <img id="emojiImg" src="https://www.gstatic.com/android/keyboard/emojikitchen/20201001/u1f914/u1f914_u1f616.png" />
+  <script src="./emojconfig.js"></script>
+  <script>
+    const API = 'https://www.gstatic.com/android/keyboard/emojikitchen/'
+    const IMG_URL = 'https://tikolu.net/emojimix/'
+    const emoji1 = emojis[0]
+    const emoji2 = emojis[0]
+    let u1 = emoji1[0].map(c => "u" + c.toString(16)).join("-");
+	  let u2 = emoji2[0].map(c => "u" + c.toString(16)).join("-");
+    console.log('u1---', u1)
+    console.log('u2---', u2)
+    const d = emoji1[1];
+
+    emojis.forEach((emoji, index) => emojis[index].push(`emojis/${emoji[0].map(c => c.toString(16)).filter(c => c != "fe0f").join("_")}.svg`));
+	
+	// let startDIV = "<div><img></div>"
+	// sliders[0].innerHTML = emojis.reduce((html, emoji, index) => `${html}<div emoji-id="${index}"><img target-src="${emoji[3]}"></div>`, startDIV);
+  
+  console.log('emojis---', emojis)
+  // window.onload = () => {
+	// 	sliders[0].goTo(lastCombination[0], true);
+	// 	sliders[1].goTo(lastCombination[1], true);
+	// 	mixEmojis(...getEmojis());
+	// 	[...document.querySelectorAll("[emoji-id] img")].forEach(image => {
+	// 		image.src = image.getAttribute("target-src");
+	// 		image.removeAttribute("target-src");
+	// 		setTimeout(() => image.removeAttribute("loading"), 1500);
+	// 	});
+	// };
+
+	  const imgUrl = `${API}${d}/${u1}/${u1}_${u2}.png`;
+    setTimeout(() => {
+      document.getElementById('emojiImg').src = imgUrl
+      document.getElementById('sliders').src = `${IMG_URL}${emojis[0][3]}` 
+    }, 1000)
+    
+
+  </script>
+</body>
+</html>
