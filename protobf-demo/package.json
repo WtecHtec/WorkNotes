@@ -1,0 +1,22 @@
+{
+  "name": "protobf-ex",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "proto": "pbjs  -t json-module -w commonjs -o ./proto/proto.js  ./proto/*.proto",
+    "proto-es6": "pbjs ./proto/user.proto -es6 ./proto/proto.js "
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "axios": "^1.5.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "dependencies": {
+    "protobufjs": "6.11"
+  }
+}

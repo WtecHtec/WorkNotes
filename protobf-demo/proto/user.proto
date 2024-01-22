@@ -1,0 +1,7 @@
+syntax = "proto3";
+package userpackage;
+
+message User {
+  string name = 0;
+  int64 age = 1;
+}
