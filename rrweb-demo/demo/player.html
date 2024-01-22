@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <title>player</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <style>
+    .player {
+      position: relative;
+      height: 800px;
+      width: 800px;
+    }
+
+    #plyerCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    iframe {
+      border: none;
+    }
+  </style>
+</head>
+
+<body>
+  测试：
+  <div id="player" class="player" data-playerkey="ddd">
+    <canvas id="plyerCanvas"></canvas>
+    <iframe id="playerIframe"></iframe>
+  </div>
+
+
+  <script src="./data.js"></script>
+  <script src="./type.js"></script>
+  <script>
+    const datas = TEST_DATAS
+    const width = 800
+    const height = 800
+    let canvas = null
+    let ratio = 1
+  </script>
+  <script>
+    // console.log(document.getElementById('player').attributes['data-playerkey'].value)
+    function getCanvasCtx() {
+      canvas = document.getElementById('plyerCanvas');
+
+      ratio = window.devicePixelRatio || 1;
+      canvas.width = width * ratio; // 实际渲染像素
+      canvas.height = height * ratio; // 实际渲染像素
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
+      if (canvas.getContext) {
+        const ctx = canvas.getContext('2d');
+        ctx.scale(ratio, ratio)
+        return ctx
+      }
+      return null
+    }
+
+
+    function renderCanvas(ctx, data) {
+      const { x, y } = data
+      if (x && y) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        ctx.beginPath();
+        ctx.globalAlpha = 0.5
+        ctx.fillStyle = '#34c24e'
+        ctx.arc(x, y, 10, 0, 2 * Math.PI);//x,y是圆心
+        ctx.fill(); //开始填充，空心/实心取决于这个
+      }
+
+    }
+
+  </script>
+  <script>
+    function render(iframeDom, data) {
+      console.log(data)
+
+      function tranformDom(data) {
+        const { attributes, childNodes, style, tagName, txtContext } = data
+        let playerkey = tagName
+        const nodeDom = tagName === '#text' ? document.createTextNode(txtContext) : document.createElement(tagName)
+
+        // attr
+        if (attributes && Object.keys(attributes).length) {
+          Object.keys(attributes).forEach(key => {
+            attributes[key] && nodeDom.setAttribute(key, attributes[key])
+            playerkey += `${key}-${attributes[key]}`
+          })
+        }
+
+        // 针对html
+        if (['HTML'].includes(tagName)) {
+          nodeDom.setAttribute('style', `${attributes[style] || ''}pointer-events: none;`)
+          playerkey += `style-${attributes[style] || ''}pointer-events: none;`
+        }
+
+        // 针对 input 输入
+        if (['INPUT'].includes(tagName)) {
+          // console.log('txtContext====', txtContext)
+          // nodeDom.value = txtContext || ''
+          nodeDom.setAttribute('value', txtContext || '')
+          playerkey += `value-${txtContext || ''}`
+        }
+
+        // 针对 TEXTAREA
+        if (['TEXTAREA'].includes(tagName)) {
+          console.log('txtContext==== TEXTAREA', txtContext)
+          // nodeDom.value = txtContext || ''
+          nodeDom.innerText = txtContext || ''
+          playerkey += `innerText-${txtContext || ''}`
+          // nodeDom.inner ('value', txtContext || '')
+        }
+
+
+        // data-playerkey 唯一标识
+        // tagName !== '#text' && nodeDom.setAttribute('data-playerkey', playerkey || '')
+
+
+        if (childNodes && childNodes.length) {
+          // console.log('childNodes====', childNodes.length)
+          childNodes.forEach(child => {
+            nodeDom.appendChild(tranformDom(child))
+          })
+        }
+
+        return nodeDom;
+      }
+      // const root = tranformDom(data)
+      // console.log('render====', root)
+
+      // iframeDom.srcdoc = root.outerHTML
+      //  console.log('iframeDom.contentDocument====', iframeDom.contentDocument.getElementsByTagName('html')[0]) 
+      // diff 算法+++
+      //  iframeDom.contentDocument.replaceChild(root, iframeDom.contentDocument.getElementsByTagName('html')[0]) 
+
+      function getAttrValue(attributes, key) {
+        try {
+          return attributes[key].value
+        } catch (error) {
+          return ''
+        }
+      }
+
+      function update(oldDom, newDom, type, parentNode) {
+        const { attributes: oldAttributes = {}, childNodes: oldChildNodes = [], nodeName: oldName, txtContext: oldText } = oldDom || {}
+        const { attributes: newAttributes = {}, childNodes: newChildNodes = [], nodeName: newName, txtContext: newText } = newDom || {}
+
+        if (oldDom && newDom) {
+          // oldDom.parentNode.replaceChild(newDom, oldDom)
+          // tag 不同
+          if (oldName !== newName) {
+            console.log('oldName newName ====', oldDom, newDom, type, parentNode)
+            parentNode.replaceChild(newDom, oldDom)
+            // return
+          }
+
+          if (oldName === 'HEAD' && newName === oldName) {
+            console.log('HEAD====', oldAttributes, newAttributes)
+          }
+
+          const oldKeys = Object.keys(oldAttributes)
+          const newKeys = Object.keys(newAttributes)
+          const hasKey = {}
+          newKeys.forEach(key => {
+            const { nodeName } = newAttributes[key]
+            if (!oldAttributes[nodeName] || (oldAttributes[nodeName] && oldAttributes[nodeName].textContent !== newAttributes[nodeName].textContent)) {
+              // console.log('attr=========', nodeName, newAttributes[nodeName].textContent)
+              oldDom.setAttribute(nodeName, newAttributes[nodeName].textContent)
+            }
+            if (oldAttributes[nodeName]) {
+              hasKey[nodeName] = 1
+            }
+          })
+
+          // oldKeys.forEach(key => {
+          //   const { nodeName } = oldAttributes[key]
+          //   if (!hasKey[nodeName]) {
+          //     oldDom.setAttribute(nodeName, '')
+          //   }
+          // })
+
+        }
+
+        // 针对 #text
+        if (oldDom && newDom && oldName === '#text' && newName === oldName && oldText != newText) {
+          console.log('#text====', oldText, newText)
+          oldDom.parentNode.replaceChild(newDom, oldDom)
+        }
+
+        if (type === 'old') {
+          if (!newDom && oldDom) {
+            console.log('del', oldDom)
+            oldDom.remove()
+          }
+        }
+
+        if (type === 'new') {
+          if (!oldDom && newDom && parentNode) {
+            console.log('new', newDom)
+            parentNode.appendChild(newDom)
+          }
+        }
+
+        console.log('newChildNod===', oldChildNodes, newChildNodes)
+        let maxType = 'old'
+        let len = 0
+        if (oldChildNodes.length > newChildNodes.length) {
+          len = oldChildNodes.length
+        } else {
+          maxType = 'new'
+          len = newChildNodes.length
+        }
+        for (let i = 0; i < len; i++) {
+          update(oldChildNodes[i], newChildNodes[i], maxType, oldDom)
+        }
+
+      }
+
+
+      // console.log(iframeDom.contentDocument.getElementsByTagName('html')[0])
+      // update(iframeDom.contentDocument.getElementsByTagName('html')[0],  root)
+
+
+      function updateByData(oldDom, newDom, parentDom, maxType) {
+        const { attributes: oldAttributes = {}, childNodes: oldChildNodes = [], nodeName: oldName, txtContext: oldText, value: oldValue } = oldDom || {}
+        const { attributes: newAttributes = {}, childNodes: newChildNodes = [], tagName: newName, txtContext: newText } = newDom || {}
+
+
+        if (oldDom && newDom) {
+          if (oldName !== newName) {
+            const root = tranformDom(newDom)
+            parentDom.replaceChild(root, oldDom)
+            return
+          } else {
+            const hasKeys = {}
+            Object.keys(newAttributes).forEach(key => {
+              if (!oldAttributes[key]) {
+                oldDom.setAttribute(key, newAttributes[key])
+              }
+              if (oldAttributes[key] && oldAttributes[key].textContent !== newAttributes[key]) {
+                oldDom.setAttribute(key, newAttributes[key])
+              }
+              if (oldAttributes[key]) {
+                hasKeys[key] = 1
+              }
+            })
+
+            Object.keys(oldAttributes).forEach(key => {
+              const { nodeName } = oldAttributes[key]
+              if (!hasKeys[nodeName]) {
+                oldDom.setAttribute(nodeName, '')
+              }
+            })
+
+
+          }
+
+
+
+          // 针对html
+          if (['HTML'].includes(oldName)) {
+            oldDom.setAttribute('style', `${oldAttributes['style'] && oldAttributes['style'].textContent || ''}pointer-events: none;`)
+          }
+
+          if (newName === '#text' && oldName == newName && oldText !== newText) {
+            const root = tranformDom(newDom)
+            parentDom.replaceChild(root, oldDom)
+            return
+          }
+
+          // 针对 input 输入
+          if (['INPUT'].includes(newName) && newText !== oldValue) {
+
+            // console.log('INPUT====', newText, oldValue, oldAttributes['type'])
+
+            // nodeDom.value = txtContext || ''
+            try {
+              oldDom.value = newText
+              oldDom.setAttribute('value', newText || '')
+            } catch (error) {
+              // console.log('error===', error, newAttributes)
+            }
+
+          }
+
+          // 针对 TEXTAREA
+          if (['TEXTAREA'].includes(newName) && newText !== oldValue) {
+            oldDom.value = newText || ''
+            oldDom.innerText = newText || ''
+          }
+        }
+
+        if (maxType === 'old') {
+          if (oldDom && !newDom) {
+            oldDom.remove()
+          }
+        }
+
+        if (maxType === 'new') {
+          if (!oldDom && newDom) {
+            const root = tranformDom(newDom)
+            // console.log(parentDom)
+            // console.log(newDom)
+            parentDom.appendChild(root)
+            return
+          }
+        }
+
+
+        let len = 0
+        let type = 'old'
+        if (oldChildNodes.length > newChildNodes.length) {
+          len = oldChildNodes.length
+        } else {
+          type = 'new'
+          len = newChildNodes.length
+        }
+
+        for (let i = 0; i < len; i++) {
+          updateByData(oldChildNodes[i], newChildNodes[i], oldDom, type)
+        }
+      }
+
+      updateByData(iframeDom.contentDocument.getElementsByTagName('html')[0], data)
+
+
+    }
+    function refreshFrame(data) {
+      const ifrme = document.getElementById('playerIframe')
+      ifrme.style.width = `${width}px`
+      ifrme.style.height = `${height}px`
+      let i = 0
+      let frame = 0
+      let currentTime = new Date().getTime()
+      let status = true
+      const ctx = getCanvasCtx()
+      function renderFrame() {
+        // console.log('renderFrame ===', i, currentTime, frame)
+        const { type, node, time, position } = data[i]
+
+        // iframe 渲染
+        if (type === TYPES.DOM && node && node.length && status) {
+          render(ifrme, node[0])
+        }
+
+        // canvas 绘制
+
+        if (type === TYPES.EVENT && ctx && position && Object.keys(position).length === 2) {
+          renderCanvas(ctx, position)
+        }
+
+        if (i < data.length - 1) {
+          status = false
+          if (frame === 0) {
+            frame = time
+          }
+          const { time: nextTime } = data[i + 1]
+          const diffTime = new Date().getTime() - currentTime
+          // console.log('diffTime===', frame + diffTime > nextTime,)
+          if (frame + diffTime > nextTime) {
+            i++;
+            frame = nextTime;
+            currentTime = new Date().getTime()
+            status = true
+          }
+          window.requestAnimationFrame(renderFrame)
+        }
+      }
+
+      window.requestAnimationFrame(renderFrame)
+    }
+  </script>
+  <script>
+    function main() {
+      console.log('start', TEST_DATAS)
+      refreshFrame(TEST_DATAS)
+    }
+    window.onload = main
+
+  </script>
+</body>
+
+</html>

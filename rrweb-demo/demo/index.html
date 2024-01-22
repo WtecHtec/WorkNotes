@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <title>Page Title</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+  <style>
+    .main {
+      color: #000;
+    }
+
+    .hover-text:hover {
+      color: yellow;
+    }
+  </style>
+</head>
+
+<body class="main main2" data-item="main-text">
+  <div id="mainId">
+    设置
+    <button id="add" onclick="handAdd()"> 添加节点 </button>
+    计数：<span id="acount"> 0 </span>
+    <button onclick="handAcount()"> 计数 </button>
+    <button onclick="handColor()"> 修改颜色 </button>
+
+    <div class="hover-text" id="hoverText"> HOVER </div>
+    <div>
+      输入框
+      <input id="testInput" />
+      <textarea  id="testTextarea"></textarea>
+      <input type="file" placeholder="777" />
+      <input type="button" value="button">
+    </div>
+
+  </div>
+
+
+  </div>
+
+  <img src="https://img-blog.csdnimg.cn/20201014180756926.png?x-oss-process=image/resize,m_fixed,h_64,w_64" />
+
+  <!-- <iframe src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css"></iframe> -->
+
+  <script src='https://cdn.bootcdn.net/ajax/libs/jquery/3.6.4/jquery.js'></script>
+
+  <script src="./type.js"></script>
+  <script>
+    function handAdd() {
+      const divDom = document.createElement('div')
+      divDom.innerHTML = `新增节点${Math.random()}`
+      document.getElementById('mainId').appendChild(divDom)
+    }
+
+    let acount = 0
+    const acountDom = document.getElementById('acount')
+    function handAcount() {
+      acount++
+      acountDom.innerHTML = acount
+    }
+
+    function handColor() {
+      const mainDom = document.getElementById('mainId')
+      mainDom.style.color = 'green'
+    }
+
+  </script>
+  <script>
+    // let stopFn = rrweb.record({
+    //   emit(event) {
+    //     console.log('event===', event)
+    //     // if (events.length > 100) {
+    //     //   // stop after 100 events
+
+    //     // }
+    //   },
+    // });
+
+    const events = []
+
+    let iframeDom = null
+
+    let status = 'loading'
+
+    // Array.prototype.push = function() {
+    //   this[this.length] = arguments[0];
+    //   console.log(this)
+    // }
+    function getWindowHeight() {
+      return window.innerHeight || document.documentElement && document.documentElement.clientHeight || document.body && document.body.clientHeight;
+    }
+    function getWindowWidth() {
+      return window.innerWidth || document.documentElement && document.documentElement.clientWidth || document.body && document.body.clientWidth;
+    }
+
+    function deepCopy(data) {
+      return JSON.parse(JSON.stringify(data))
+    }
+
+    function getStyleByDisplay(dom) {
+      try {
+        return getComputedStyle(dom).display
+      } catch (e) {
+        return ''
+      }
+    }
+
+    function printEvents() {
+      console.log('events===', JSON.stringify(deepCopy(events)))
+      console.log(events)
+    }
+
+		// function reqListener() {
+		// 	console.log(this.responseText);
+		// }
+
+		// let oReq = new XMLHttpRequest();
+		// oReq.addEventListener("load", reqListener);
+		// oReq.open("GET", "https://lf3-cdn-tos.bytescm.com/obj/static/xitu_juejin_web//static/bytedesign.min.css");
+		// oReq.send();
+  </script>
+
+  <script>
+    console.log(document.childNodes[1])
+    function downLoadLink(linkUrl) {
+      iframeDom = iframeDom || document.createElement('iframe')
+      iframeDom.src = linkUrl
+      iframeDom.id = 'test_iframeDom'
+
+      const msgScript = document.createComment('script')
+      iframeDom.appendChild(msgScript)
+      iframeDom.onload = (e) => {
+        // console.log('iframe=====',  iframeDom.contentWindow.window.document)
+        var myIframe = document.getElementById("test_iframeDom").contentWindow
+          .document.getElementById("son").innerText;
+        console.log(myIframe)
+      }
+      iframeDom && document.body.appendChild(iframeDom)
+    }
+
+    // DomTree 转换
+    function parseDom(dom, position) {
+      let id = 0
+      const hoverClass = `hover_`
+      function parse(dom, position) {
+        if (!dom) return ''
+        const node = {
+          id,
+          tagName: dom.nodeName || '',
+          txtContext: dom.nodeName === '#text' ? dom.textContent || '' : '',
+          attributes: {},
+          style: {},
+          childNodes: [],
+        }
+        // 属性style、id、data-*
+        const attributes = dom.attributes
+        if (attributes && typeof attributes === 'object' && Object.keys(attributes)) {
+          Object.keys(attributes).forEach(key => {
+            node.attributes[attributes[key].nodeName] = attributes[key].value
+          })
+        }
+
+        if (position && Object.keys(position).length === 2) {
+
+          if (dom.parentNode.nodeName === 'STYLE' && node.tagName === '#text') {
+
+            const HOVER_SELECTOR = /:hover/g
+            // if (HOVER_SELECTOR.test(node.txtContext)) {
+            // 	node.txtContext = node.txtContext.replace(HOVER_SELECTOR, `.${hoverClass}`)
+            // 	// console.log('STYLE', node.txtContext,)
+            // }
+            node.txtContext = node.txtContext.replace(HOVER_SELECTOR, `.${hoverClass}`)
+            console.log('样式', node)
+          }
+
+          try {
+            const { x, y } = position
+            const { top, left, bottom, right } = dom.getBoundingClientRect()
+            if (y >= top && y <= bottom && x >= left && x <= right) {
+              console.log('目标节点', hoverClass);
+              node.attributes.class = `${node.attributes.class || ''} ${hoverClass}`
+            }
+          } catch (error) {
+          }
+
+        }
+
+        // 针对 display 
+        // if (getStyleByDisplay(dom) === 'none' ) {
+        //   node.style.display = 'none'
+        // }
+
+        // 针对 script, 直接失效
+        if (node.tagName === 'SCRIPT') {
+          node.tagName = 'NOSCRIPT'
+        }
+
+        // 针对link, 直接引用链接
+        // if (node.tagName === 'LINK' && node.attributes.rel === 'stylesheet') {
+        // 	console.log('dom.href====', node, dom.href)
+        // 	downLoadLink(dom.href)
+        // }
+
+        // 针对 input 输入
+        if (['TEXTAREA', 'INPUT'].includes(node.tagName)) {
+          node.txtContext = dom.value || ''
+        }
+
+        // 子节点数组
+        const childNodes = dom.childNodes
+        if (childNodes && childNodes.length) {
+          for (let i = 0; i < childNodes.length; i++) {
+            id++;
+            if (childNodes[i].nodeName !== '#comment' && getStyleByDisplay(dom) !== 'none') {
+              node.childNodes.push(parse(childNodes[i], position))
+            } else if (getStyleByDisplay(dom) === 'none' && ['STYLE', 'HEAD'].includes(dom.nodeName)) {
+              node.childNodes.push(parse(childNodes[i], position))
+            }
+          }
+        }
+        return node;
+      }
+      const nodes = parse(dom, position)
+      return [nodes];
+    }
+
+  </script>
+
+  <script>
+    // 监听 html 文档加载
+    document.addEventListener('readystatechange', () => {
+      console.log('document.readyState===', document.readyState)
+      if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        status = document.readyState
+        events.push({
+          type: TYPES.META,
+          data: {
+            href: window.location.href,
+            width: getWindowWidth(),
+            height: getWindowHeight(),
+          },
+          time: new Date().getTime(),
+        })
+        const root = parseDom(document.childNodes[1])
+        // console.log(root)
+        events.push({
+          type: TYPES.DOM,
+          node: root,
+          time: new Date().getTime(),
+        })
+      }
+      printEvents()
+    });
+
+
+  </script>
+
+  <script>
+    // 监听 dom 操作
+    const infoDom = document.documentElement
+
+    const config = {
+      childList: true,
+      subtree: true,
+      attribute: true,
+      characterData: true,
+      attributeFilter: ['class', 'style']
+    };
+
+    const mutObserver = new MutationObserver((mutationList, observer) => {
+      if (status === 'complete') {
+        console.log(mutationList, observer)
+        const root = parseDom(document.childNodes[1])
+        events.push({
+          type: TYPES.DOM,
+          node: root,
+          time: new Date().getTime(),
+        })
+        printEvents()
+      }
+    });
+
+    mutObserver.observe(infoDom, config)
+
+  </script>
+
+  <script>
+
+    let cacheHover = ''
+    window.addEventListener('mousemove', (e) => {
+      const { x, y, target } = e
+
+      // 1. 记录 id，
+      // 2. 把hover 样式单独放到一个style里面
+      // 外链css 会舍弃hover
+      events.push({
+        type: TYPES.EVENT,
+        position: {
+          x,
+          y,
+        },
+        time: new Date().getTime()
+      })
+
+      // const hoverDoms = document.querySelectorAll(':hover')
+      // console.log('hoverDoms====', hoverDoms[hoverDoms.length - 1].nodeName)
+
+      if (target && !['HTML'].includes(target.nodeName)) {
+        const { top, left, bottom, right } = target.getBoundingClientRect()
+        const cache = `${top}-${left}-${bottom}-${right}-${target.nodeName}-${target.innerText}`
+        // console.log(hoverDoms)
+        // console.log('mousemove====', e.target)
+        // const comStyles = getComputedStyle(e.target, ":hover")
+        // console.log('comStyles====', JSON.stringify(comStyles))
+        if (cache !== cacheHover) {
+          console.log('target===', cache)
+          const root = parseDom(document.childNodes[1], { x, y })
+          events.push({
+            type: TYPES.DOM,
+            node: root,
+            time: new Date().getTime(),
+          })
+          cacheHover = cache
+        }
+      }
+    })
+
+  </script>
+
+
+  <script>
+    // 输入框
+    document.addEventListener('input', (event) => {
+      console.log(event)
+      const root = parseDom(document.childNodes[1])
+      events.push({
+        type: TYPES.DOM,
+        node: root,
+        time: new Date().getTime(),
+      })
+    })
+  </script>
+</body>
+
+</html>
