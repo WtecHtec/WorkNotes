@@ -87,7 +87,10 @@
       function tranformDom(data) {
         const { attributes, childNodes, style, tagName, txtContext } = data
         let playerkey = tagName
-        const nodeDom = tagName === '#text' ? document.createTextNode(txtContext) : document.createElement(tagName)
+        let nodeDom =  document.createElement('span')
+        if ( tagName === '#text') nodeDom = document.createTextNode(txtContext) 
+        else if (tagName === '#comment') nodeDom = document.createComment(txtContext) 
+        else nodeDom = document.createElement(tagName)
 
         // attr
         if (attributes && Object.keys(attributes).length) {

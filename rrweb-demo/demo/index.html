@@ -3,6 +3,7 @@
 
 <head>
   <meta charset='utf-8'>
+  <meta name="referrer" content="no-referrer" /><!--页面头部添加-->
   <meta http-equiv='X-UA-Compatible' content='IE=edge'>
   <title>Page Title</title>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
@@ -20,11 +21,13 @@
 </head>
 
 <body class="main main2" data-item="main-text">
+  <button onclick="printEvents()"> 导出录屏 </button>
   <div id="mainId">
     设置
     <button id="add" onclick="handAdd()"> 添加节点 </button>
     计数：<span id="acount"> 0 </span>
     <button onclick="handAcount()"> 计数 </button>
+ 
     <button onclick="handColor()"> 修改颜色 </button>
 
     <div class="hover-text" id="hoverText"> HOVER </div>
@@ -32,7 +35,7 @@
       输入框
       <input id="testInput" />
       <textarea  id="testTextarea"></textarea>
-      <input type="file" placeholder="777" />
+      <!-- <input type="file" placeholder="777" /> -->
       <input type="button" value="button">
     </div>
 
