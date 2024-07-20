@@ -29,3 +29,4 @@
 27. node-websocket --- 实现一个websocket 协议服务
 28. rrweb-demo --- 基于虚拟dom录屏网页
 29. protobf-demo --- 基于node的protobf使用
+30. swiper -- 简易版swiper【SDK 中支持plugin注入】
