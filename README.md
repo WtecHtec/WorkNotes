@@ -31,3 +31,4 @@
 29. protobf-demo --- 基于node的protobf使用
 30. swiper -- 简易版swiper【SDK 中支持plugin注入】
 31. wheel3DView -- swift 3d 加载动画
+32. SparkleUpdate -- 自定义Sparkle更新窗口
