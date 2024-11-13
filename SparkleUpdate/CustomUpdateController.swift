@@ -173,9 +173,9 @@ final class UpdateController {
             updater.automaticallyChecksForUpdates = true
             updater.automaticallyDownloadsUpdates = false
             updater.updateCheckInterval = 3600 * 6
-            updater.setFeedURL(URL(string: "https://whisperserver.hkg1.zeabur.app/appcast.xml"))
+            updater.setFeedURL(URL(string: "https:/***/appcast.xml"))
 #if DEBUG
-            updater.setFeedURL(URL(string: "https://whisperserver.hkg1.zeabur.app/betaappcast.xml"))
+            updater.setFeedURL(URL(string: "https://******/betaappcast.xml"))
 #endif
 
         } catch {
