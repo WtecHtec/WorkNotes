@@ -32,3 +32,4 @@
 30. swiper -- 简易版swiper【SDK 中支持plugin注入】
 31. wheel3DView -- swift 3d 加载动画
 32. SparkleUpdate -- 自定义Sparkle更新窗口
+33. SherpaOnnx -- SherpaOnnx swift 模型引用文件
