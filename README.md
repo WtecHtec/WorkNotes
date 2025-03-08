@@ -33,3 +33,4 @@
 31. wheel3DView -- swift 3d 加载动画
 32. SparkleUpdate -- 自定义Sparkle更新窗口
 33. SherpaOnnx -- SherpaOnnx swift 模型引用文件
+34. mcp-weather-server -- claude mcp 天气服务
