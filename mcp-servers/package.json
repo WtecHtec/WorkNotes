@@ -1,0 +1,27 @@
+{
+  "name": "nodeserver",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@nut-tree/nut-js": "^3.1.2",
+    "cheerio": "^1.0.0",
+    "dgram": "^1.0.1",
+    "dotenv": "^16.5.0",
+    "epub": "^1.2.1",
+    "express": "^5.1.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "robotjs": "^0.6.0",
+    "sentence-splitter": "^5.0.0",
+    "undici": "^7.8.0",
+    "ws": "^8.18.0"
+  }
+}
