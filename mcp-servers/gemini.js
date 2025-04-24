@@ -14,7 +14,7 @@ app.use(express.json());
 
 // 初始化 Google AI
 // const genAI = new GoogleGenerativeAI('AIzaSyAb6PWSd7AC7a847Z_fKmtiuG7Ul8WJI1Y');
-const genAI = new GoogleGenerativeAI('AIzaSyAb6PWSd7AC7a847Z_fKmtiuG7Ul8WJI1Y');
+const genAI = new GoogleGenerativeAI('');
 // 创建聊天模型实例
 // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"}, {
