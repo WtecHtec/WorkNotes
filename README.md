@@ -34,3 +34,5 @@
 32. SparkleUpdate -- 自定义Sparkle更新窗口
 33. SherpaOnnx -- SherpaOnnx swift 模型引用文件
 34. mcp-weather-server -- claude mcp 天气服务
+35. mcp-weather -- gemini MCP 服务端处理
+36. pyRAG -- 基于python简单实现RAG
