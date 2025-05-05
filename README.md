@@ -35,3 +35,5 @@
 33. SherpaOnnx -- SherpaOnnx swift 模型引用文件
 34. mcp-weather-server -- claude mcp 天气服务
 35. zotero -- 基于zotero的pdf中英翻译
+36. mcp-weather -- gemini MCP 服务端处理
+37. pyRAG -- 基于python简单实现RAG

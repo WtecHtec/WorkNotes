@@ -3,3 +3,5 @@ package-lock.json
 node_modules
 */translated/**
 .DS_Store
+pnpm-lock.yaml
+__pycache__
