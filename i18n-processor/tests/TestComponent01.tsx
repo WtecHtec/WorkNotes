@@ -1,5 +1,4 @@
-import { t } from '@/languges'; 
-import React, { useState } from 'react';
+import { t } from '@/i18n';import React, { useState } from 'react';
 import { Button, Input, message } from 'antd';
 
 interface User {

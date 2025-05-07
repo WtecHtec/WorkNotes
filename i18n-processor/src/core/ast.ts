@@ -132,15 +132,18 @@ export async function processWithAST(content: string): Promise<ProcessResult> {
       }
     });
 
+    let importCode = '';
     if (hasModification && needImportT) {
-      const importAst = parse(`import { t } from '@/i18n';`, {
-        sourceType: 'module'
-      });
-      ast.program.body.unshift(importAst.program.body[0]);
+      // const importAst = parse(`import { t } from '@/languges';`, {
+      //   sourceType: 'module'
+      // });
+      // ast.program.body.unshift(importAst.program.body[1]);
+      // ast.program.body.unshift(importAst.program.body[0]);
+      importCode =  `import { t } from '@/languges'; \n`
     }
 
     return {
-      code: generate(ast, { 
+      code: importCode + generate(ast, { 
         retainLines: true, 
         compact: false,
         jsescOption: {

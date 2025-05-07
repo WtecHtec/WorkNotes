@@ -1,5 +1,4 @@
 import { processWithAST } from './ast';
-import { processWithRegex } from './regex';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { ProcessOptions } from './types';
@@ -10,26 +9,24 @@ export async function processFile(filePath: string, options: ProcessOptions) {
     if (!await isValidFile(filePath)) {
       throw new Error(`无效的文件: ${filePath}`);
     }
-
+    console.log("处理文件中:::")
     const content = await fs.readFile(filePath, 'utf8');
-    const processor = options.mode === 'ast' ? processWithAST : processWithRegex;
+    const processor = options.mode === 'ast' ? processWithAST : processWithAST;
     
     const result = await processor(content);
-    
+    const outputPath = options.output 
+    ? path.join(options.output, path.relative(process.cwd(), filePath))
+    : filePath;
     if (result.hasModification) {
-      const outputPath = options.output 
-        ? path.join(options.output, path.relative(process.cwd(), filePath))
-        : filePath;
-        console.log("outputPath:::", outputPath, path.dirname(outputPath))
+      // 确保输出目录存在
       await ensureOutputDir(path.dirname(outputPath));
        // 确保输出文件存在
       await ensureFileExists(outputPath);
-
+      // 写入文件
       await fs.writeFile(outputPath, result.code, 'utf8');
-      
-      if (options.verbose) {
-        console.log(`已处理文件: ${outputPath}`);
-      }
+      console.log(`已处理文件: ${outputPath}`);
+    } else {
+      console.log(`文件没有内容可修改.`);
     }
   } catch (error) {
     console.error(`处理文件 ${filePath} 时出错:`, error);
