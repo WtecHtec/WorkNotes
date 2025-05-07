@@ -1,0 +1,42 @@
+{
+  "name": "i18n-processor",
+  "version": "1.0.0",
+  "description": "一个用于处理 React 项目国际化的命令行工具",
+  "main": "dist/cli.js",
+  "bin": {
+    "i18n-processor": "./bin/i18n-processor.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "i18n",
+    "react",
+    "internationalization",
+    "cli"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@babel/parser": "^7.x",
+    "@babel/traverse": "^7.x",
+    "@babel/generator": "^7.x",
+    "@babel/types": "^7.x",
+    "commander": "^8.x"
+  },
+  "devDependencies": {
+    "@types/node": "^16.x",
+    "@types/babel__traverse": "^7.x",
+    "typescript": "^4.x",
+    "ts-node": "^10.x",
+    "jest": "^27.x",
+    "@types/jest": "^27.x",
+    "eslint": "^8.x",
+    "@typescript-eslint/parser": "^5.x",
+    "@typescript-eslint/eslint-plugin": "^5.x",
+    "prettier": "^2.x"
+  }
+}
