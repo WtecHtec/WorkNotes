@@ -15,3 +15,12 @@
 ```bash
 npm install -g i18n-processor
 ```
+## 使用
+```bash
+i18n-processor --help
+```
+## 选项
+- `-f, --file <file>`: 指定要处理的文件或目录
+- `-d, --dir <directory>`: '要处理的目录路径
+- `-o, --output <output>`: 指定输出目录，默认为当前目录
+

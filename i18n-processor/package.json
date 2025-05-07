@@ -1,11 +1,15 @@
 {
   "name": "i18n-processor",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "一个用于处理 React 项目国际化的命令行工具",
   "main": "dist/cli.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "i18n-processor": "./bin/i18n-processor.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest",
@@ -18,7 +22,11 @@
     "internationalization",
     "cli"
   ],
-  "author": "Your Name",
+  "author": "wtechtec",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WtecHtec/WorkNotes.git"
+  },
   "license": "MIT",
   "dependencies": {
     "@babel/parser": "^7.x",
