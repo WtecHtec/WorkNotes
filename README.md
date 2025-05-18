@@ -38,3 +38,4 @@
 36. mcp-weather -- gemini MCP 服务端处理
 37. pyRAG -- 基于python简单实现RAG
 38. i18n-processor -- 国际化处理工具、结合[voerka-i18n](https://zhangfisher.github.io/voerka-i18n/)
+39. pyRTC -- 基于python实现的实时语音识别、语音合成LLM + ASR + TTS (SherpaOnnx)

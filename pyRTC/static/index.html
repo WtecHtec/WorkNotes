@@ -1,0 +1,404 @@
+<!-- 主要功能模块:
+1. WebRTC音频流处理
+2. 音频可视化显示
+3. WebSocket通信
+4. 语音识别结果展示
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>语音助手</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #34495e;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #3498db;
+            color: white;
+        }
+
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #hangupButton {
+            background: #e74c3c;
+        }
+
+        #hangupButton:hover {
+            background: #c0392b;
+        }
+
+        #asr-result {
+            min-height: 100px;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .asr-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .asr-list li {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .visualizer-container {
+            width: 100%;
+            height: 60px;
+            background: #000;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+        }
+
+        #input-visualizer, #output-visualizer {
+            width: 100%;
+            height: 100%;
+        }
+
+        .status {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        #tts-audio {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>WebRTC 实时语音问答 (LLM + Sherpa-ONNX[ASR+TTS])</h2>
+        
+        <div class="button-group">
+            <button id="start">开始对话</button>
+            <button id="hangupButton" style="display: none;">结束对话</button>
+        </div>
+
+        <div class="visualizer-container" id="input-visualizer-container">
+            <canvas id="input-visualizer"></canvas>
+        </div>
+
+        <div class="visualizer-container" id="output-visualizer-container">
+            <canvas id="output-visualizer"></canvas>
+        </div>
+
+        <div id="asr-result">
+            <ul class="asr-list"></ul>
+        </div>
+        <audio id="tts-audio" style="display: none;"></audio>
+    </div>
+    <script>
+    let  pc = null
+ 
+    let stream = null;
+    const ws = new WebSocket(`ws://${window.location.host}/ws`);
+    let asr_results = []
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'asr_result_ing' || data.type === 'asr_result') {
+            let id = data.id 
+            const resultList = document.querySelector('.asr-list');
+            if (asr_results[id]) {
+                asr_results[id] = data.text
+                document.getElementById('asr-result-' + id).textContent = asr_results[id];
+            } else {
+               
+                const listItem = document.createElement('li');
+                listItem.id = 'asr-result-' + id
+                listItem.textContent = data.text;
+                resultList.appendChild(listItem);
+                asr_results[id] = data.text;
+            }
+            resultList.scrollTop = resultList.scrollHeight;
+        } 
+        else if (data.type === 'tts_audio') {
+            try {
+                if (stream) {
+                    stream.getAudioTracks().forEach(track => {
+                        if (track.readyState === 'live') {
+                            track.enabled = false;
+                        }
+                    });
+                 }
+               
+                
+                document.getElementById('input-visualizer-container').style.display = 'none';
+                document.getElementById('output-visualizer-container').style.display = 'block';
+                
+                const audioData = atob(data.audio);
+                const audioArray = new Int16Array(audioData.length / 2);
+                const dataView = new DataView(new ArrayBuffer(audioData.length));
+                
+                for (let i = 0; i < audioData.length; i++) {
+                    dataView.setUint8(i, audioData.charCodeAt(i));
+                }
+                
+                for (let i = 0; i < audioArray.length; i++) {
+                    audioArray[i] = dataView.getInt16(i * 2, true);
+                }
+                
+                const floatArray = new Float32Array(audioArray.length);
+                for (let i = 0; i < audioArray.length; i++) {
+                    floatArray[i] = audioArray[i] / 32768.0;
+                }
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = audioContext.createBuffer(1, floatArray.length, data.sample_rate);
+                audioBuffer.getChannelData(0).set(floatArray);
+                
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                
+                const analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                
+                const gainNode = audioContext.createGain();
+                gainNode.gain.value = 1.2;
+                
+                source.connect(analyser);
+                analyser.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                const canvas = document.getElementById('output-visualizer');
+                const canvasCtx = canvas.getContext('2d');
+                
+                function drawOutputVisualizer() {
+                    requestAnimationFrame(drawOutputVisualizer);
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    canvas.width = canvas.clientWidth;
+                    canvas.height = canvas.clientHeight;
+                    
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let barHeight;
+                    let x = 0;
+                    
+                    canvasCtx.fillStyle = '#000';
+                    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    for(let i = 0; i < bufferLength; i++) {
+                        barHeight = dataArray[i] / 2;
+                        canvasCtx.fillStyle = `rgb(${barHeight + 100}, 50, 50)`;
+                        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        x += barWidth + 1;
+                    }
+                }
+                
+                drawOutputVisualizer();
+                source.start(0);
+                
+                source.onended = () => {
+                   
+                    if (stream) {
+                        stream.getAudioTracks().forEach(track => {
+                            if (track.readyState === 'live') {
+                                track.enabled = true;
+                            }
+                        });
+                    }
+                    document.getElementById('input-visualizer-container').style.display = 'block';
+                    document.getElementById('output-visualizer-container').style.display = 'none';
+                };
+                
+            } catch (error) {
+               
+                if (stream) {
+                        stream.getAudioTracks().forEach(track => {
+                            if (track.readyState === 'live') {
+                                track.enabled = true;
+                            }
+                        });
+                    }
+                console.error('播放TTS音频失败:', error);
+            }
+        }
+    };
+
+    ws.onclose = function() {
+        console.log('WebSocket连接已关闭');
+    };
+
+    ws.onerror = function(error) {
+        console.error('WebSocket错误:', error);
+    };
+
+ 
+    
+    document.getElementById('hangupButton').addEventListener('click', async () => {
+        try {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            if (pc) {
+                pc.close();
+            }
+            // document.getElementById('hangupButton').style.display = 'block';
+            document.getElementById('start').style.display = 'block';
+            document.getElementById('hangupButton').style.display = 'none';
+            document.getElementById('input-visualizer-container').style.display = 'none';
+            document.getElementById('output-visualizer-container').style.display = 'none';
+            
+            console.log('通话已结束');
+        } catch (e) {
+            console.error('挂断失败:', e);
+        }
+    });
+
+    document.getElementById('start').onclick = async () => {
+        document.getElementById('input-visualizer-container').style.display = 'block';
+        
+        pc = new RTCPeerConnection({
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('浏览器不支持麦克风输入！');
+            return;
+        }
+       
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                sampleRate: 48000,
+                channelCount: 1,
+                sampleSize: 16,
+                noiseSuppression: false,
+                echoCancellation: false,
+                autoGainControl: false
+            }, 
+            video: false 
+        });
+
+        // 创建音频分析器
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const microphone = audioContext.createMediaStreamSource(stream);
+        microphone.connect(analyser);
+        analyser.fftSize = 256;
+        
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        const canvas = document.getElementById('input-visualizer');
+        const canvasCtx = canvas.getContext('2d');
+        
+        function drawInputVisualizer() {
+            requestAnimationFrame(drawInputVisualizer);
+            analyser.getByteFrequencyData(dataArray);
+            
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let barHeight;
+            let x = 0;
+            
+            canvasCtx.fillStyle = '#000';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for(let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] / 2;
+                canvasCtx.fillStyle = `rgb(50, ${barHeight + 100}, 50)`;
+                canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+        }
+        
+        drawInputVisualizer();
+        
+        stream.getTracks().forEach(track =>  {
+            
+            pc.addTrack(track, stream)
+        } );
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const response = await fetch('/offer', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                sdp: pc.localDescription.sdp, 
+                type: pc.localDescription.type 
+            }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const answer = await response.json();
+        await pc.setRemoteDescription(answer);
+        document.getElementById('hangupButton').style.display = 'block';
+        document.getElementById('start').style.display = 'none';
+    };
+    </script>
+</body>
+</html>

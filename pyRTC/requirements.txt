@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+websockets
+python-dotenv
+httpx
+# STT/TTS: sherpa-onnx
+sherpa-onnx
+# 音频处理库 (用于格式转换)
+pydub 
+numpy 
+# WebRTC for Python
+aiortc
+av
+webrtcvad
+dotenv
