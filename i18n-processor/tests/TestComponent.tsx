@@ -15,7 +15,7 @@ export const TestComponent: React.FC = () => {
   
   // 包含变量的模板字符串
   const welcomeText = `欢迎 ${user.name}，您已年满 ${user.age} 岁`;
-  
+  console.log("欢迎");
   // JSX 中的中文文本
   const handleSubmit = () => {
     setLoading(true);

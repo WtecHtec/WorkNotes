@@ -17,13 +17,34 @@ export async function processWithAST(content: string): Promise<ProcessResult> {
     // 添加防递归标记
     const processedNodes = new WeakSet();
 
+      // 添加辅助函数检测是否在 console 调用中
+      function isInConsoleCall(path: any): boolean {
+        let current = path.parent;
+        while (current) {
+          if (current.type === 'CallExpression' && 
+              current.callee.type === 'MemberExpression' &&
+              current.callee.object.type === 'Identifier' &&
+              current.callee.object.name === 'console') {
+            return true;
+          }
+          // 向上遍历父节点
+          if (current.parent) {
+            current = current.parent;
+          } else {
+            break;
+          }
+        }
+        return false;
+      }
+
     traverse(ast, {
       StringLiteral(path) {
         // 检查节点是否已处理或者是t函数的参数
         if (processedNodes.has(path.node) || 
-            path.parent.type === 'CallExpression' && 
+            (path.parent.type === 'CallExpression' && 
             path.parent.callee.type === 'Identifier' && 
-            path.parent.callee.name === 't') {
+            path.parent.callee.name === 't') ||
+            isInConsoleCall(path)) {
           return;
         }
 
@@ -139,7 +160,7 @@ export async function processWithAST(content: string): Promise<ProcessResult> {
       // });
       // ast.program.body.unshift(importAst.program.body[1]);
       // ast.program.body.unshift(importAst.program.body[0]);
-      importCode =  `import { t } from '@/languges'; \n`
+      importCode =  `import { t } from '@/languages'; \n`
     }
 
     return {

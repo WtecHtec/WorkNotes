@@ -1,6 +1,6 @@
 {
   "name": "i18n-processor",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "一个用于处理 React 项目国际化的命令行工具",
   "main": "dist/cli.js",
   "types": "dist/index.d.ts",
@@ -27,6 +27,7 @@
     "type": "git",
     "url": "git+https://github.com/WtecHtec/WorkNotes.git"
   },
+  "homepage": "https://github.com/WtecHtec/WorkNotes/tree/master/i18n-processor",
   "license": "MIT",
   "dependencies": {
     "@babel/parser": "^7.x",
