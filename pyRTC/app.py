@@ -21,7 +21,17 @@ import json
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+from elevenlabs import stream
+from elevenlabs.client import ElevenLabs
+
 load_dotenv()  # 加载环境变量
+
+
+
+
+
+
+
 # 星火大模型配置
 XUNFEI_API_URL = "https://spark-api-open.xf-yun.com/v1/chat/completions"
 XUNFEI_API_KEY = os.getenv("XUNFEI_API_KEY", "")  # 从环境变量获取API密钥
@@ -40,6 +50,12 @@ TTS_MODEL_DIR = "./models/tts/vits-icefall-zh-aishell3/"
 TTS_MODEL_FILE = os.path.join(TTS_MODEL_DIR, "model.onnx")
 TTS_LEXICON_FILE = os.path.join(TTS_MODEL_DIR, "lexicon.txt")
 TTS_TOKENS_FILE = os.path.join(TTS_MODEL_DIR, "tokens.txt")
+
+ELEVENLABS_API_KEY =  os.getenv("ELEVENLABS_API_KEY", "")
+print(f"ELEVENLABS_API_KEY: {ELEVENLABS_API_KEY}")
+client = ElevenLabs(
+    api_key=ELEVENLABS_API_KEY
+)
 
 
 
@@ -74,7 +90,7 @@ try:
             decoder=ASR_DECODER_MODEL,
             joiner=ASR_JOINER_MODEL,
             debug=True,
-            rule_fsts=ASR_RULE_FSTS,
+            # rule_fsts=ASR_RULE_FSTS,
         )
         # stt_recognizer = sherpa_onnx.OnlineRecognizer.from_transducer(
         #     tokens=ASR_TOKENS_FILE,
@@ -345,11 +361,39 @@ class AudioTrackReceiver(MediaStreamTrack):
                             print("TTS模型未加载")
                             # 仅发送文本结果
                             for ws in ws_clients:
-                                await ws.send_json({
-                                    'type': 'asr_result',
-                                    'text': result
-                                })
-                        
+                                # await ws.send_json({
+                                #     'type': 'asr_result',
+                                #     'text': result
+                                # })
+
+                                audio_stream = client.text_to_speech.stream(
+                                    text="This is a test",
+                                    voice_id="JBFqnCBsd6RMkjVDRZzb",
+                                    model_id="eleven_multilingual_v2",
+                                    output_format="pcm_16000",  
+                                )
+
+                                audio_chunks = []  # 存储bytes数据
+                                # option 2: process the audio bytes manually
+                                for chunk in audio_stream:
+                                    # print(f"🔴 text_to_speech: {chunk}")
+                                    if isinstance(chunk, bytes):
+                                        audio_chunks.append(chunk)
+                                        audio_base64 = base64.b64encode(chunk).decode('utf-8')
+                                       
+                                        
+                                if audio_chunks:
+                                    total_audio_bytes = b''.join(audio_chunks)  # 合并bytes
+                                    audio_base64 = base64.b64encode(total_audio_bytes).decode('utf-8')  # 一次性编码
+                                    
+                                    await ws.send_json({
+                                        'type': 'tts_audio',
+                                        'audio': audio_base64,
+                                        'format': 'mp3',  # ✅ ElevenLabs默认返回MP3
+                                        'sample_rate': 16000,  # ✅ ElevenLabs默认采样率
+                                        'size': len(total_audio_bytes)
+                                    })
+                                    print(f"🎵 发送ElevenLabs音频: {len(total_audio_bytes)} bytes")
                     except Exception as e:
                         print(f"发送WebSocket消息失败: {e}")
             # 清空缓冲区并重置识别流
