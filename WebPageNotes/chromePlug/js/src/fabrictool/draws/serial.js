@@ -21,7 +21,7 @@ function drawSerial(canvas, mouseFrom, mouseTo, color, drawWidth, other = {}) {
       originX: 'center',
       originY: 'center'
   })
-  const textbox = new fabric.Textbox( other.boxDesc ? other.boxDesc : "双击输入内容", {
+  const textbox = new fabric.Textbox( other.boxDesc ? other.boxDesc : "选择并双击输入内容", {
     left: 14,
     top: -5,
     fontSize: 18,

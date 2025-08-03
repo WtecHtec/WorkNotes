@@ -25,17 +25,17 @@ function initFormEvent() {
 			formData.rankNum = $('#wtc_rank_num').val();
 			// formData.style = $('#wtc_style_content').val();
 			// formData.afterContent = $('#wtc_after_content').val();
-			g_form_style_editor.save();
-			g_form_after_editor.save();
-			g_form_style_editor && (formData.style = g_form_style_editor.getValue());
-			g_form_after_editor && (formData.afterContent = g_form_after_editor.getValue());
+			// g_form_style_editor.save();
+			// g_form_after_editor.save();
+			// g_form_style_editor && (formData.style = g_form_style_editor.getValue());
+			// g_form_after_editor && (formData.afterContent = g_form_after_editor.getValue());
 			// console.log(g_form_style_editor.getValue())
 			// console.log(g_form_after_editor.getValue())
 			formData.viewContent = $('#wtc_view_content').val();
 		}
-		setTimeout(() => {
-			$('#hz_loading').hide();
-		}, 200);
+		// setTimeout(() => {
+		// 	$('#hz_loading').hide();
+		// }, 200);
 	})
 	$('#wtc_close_btn').on('click', () => {
 		$('.wtc_diaglog').hide();

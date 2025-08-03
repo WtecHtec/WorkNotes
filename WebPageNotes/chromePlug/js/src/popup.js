@@ -48,18 +48,18 @@ async function login() {
   console.log('8888888888888')
   const code = form[0].value
   if (!code) return
-  const res = await requestApi('accountlogin', {accountAuthor: code})
-  console.log('requestApi===',res)
-  if(res && res.statusCode === 200) {
-    getAccount('set', code)
-    getToken('set',res.responseData.token)
-    getLogin('set', 'true')
-    console.log('登陆成功')
-    $('#user_name').html(code)
-    $('#login_txt').html('切换帐号')
-  } else {
-    alert('校验码无效，请联系管理员！！保存本地')
-  }
+  // const res = await requestApi('accountlogin', {accountAuthor: code})
+  // console.log('requestApi===',res)
+  // if(res && res.statusCode === 200) {
+  //   getAccount('set', code)
+  //   getToken('set',res.responseData.token)
+  //   getLogin('set', 'true')
+  //   console.log('登陆成功')
+  //   $('#user_name').html(code)
+  //   $('#login_txt').html('切换帐号')
+  // } else {
+  //   alert('校验码无效，请联系管理员！！保存本地')
+  // }
   $('#note-btn').show()
   $('.form_div').hide()
 }

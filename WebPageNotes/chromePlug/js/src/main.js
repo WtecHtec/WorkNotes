@@ -55,26 +55,27 @@ function initEl() {
 
 async function renderHasData() {
 
-	g_login = getLogin('get');
-	const res = await checkHasData()
-	// const reads = handleReadStatus('get')
-	// console.log(res, )
-	if ( res ) {
-		const r = window.confirm('Notes Canvas 有一个笔记在召唤！！是否立即查看？')
-		if (r) {
-			console.log('opening')
-			handleReadStatus('set', true)
-			renderNotes();
-		} else {
-			console.log('close')
-			// getLogin('set', false);
-      // renderNotes();
-		}
-	} else {
-		// getLogin('set', false);
-    renderNotes();
-	}
+	// g_login = getLogin('get');
+	// const res = await checkHasData()
+	// // const reads = handleReadStatus('get')
+	// // console.log(res, )
+	// if ( res ) {
+	// 	const r = window.confirm('Notes Canvas 有一个笔记在召唤！！是否立即查看？')
+	// 	if (r) {
+	// 		console.log('opening')
+	// 		handleReadStatus('set', true)
+	// 		renderNotes();
+	// 	} else {
+	// 		console.log('close')
+	// 		// getLogin('set', false);
+  //     // renderNotes();
+	// 	}
+	// } else {
+	// 	// getLogin('set', false);
+  //   renderNotes();
+	// }
 
+  renderNotes();
 }
 
 

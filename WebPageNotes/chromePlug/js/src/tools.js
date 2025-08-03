@@ -61,8 +61,8 @@ async function handleSave() {
 					noteId: g_note_id,
 				 })
       } else {
-				const code = prompt("校验码", ""); 
-				// const code = ''
+				// const code = prompt("校验码", ""); 
+				const code = ''
 				if(code) {
 					const res = await requestApi('accountlogin', {accountAuthor: code})
 					console.log('requestApi===',res)
@@ -81,11 +81,12 @@ async function handleSave() {
 						alert('校验码无效，请联系管理员！！保存本地')
 						window.localStorage.setItem(pathUrl, JSON.stringify(elJson))
 					}
+          window.localStorage.setItem(pathUrl, JSON.stringify(elJson))
 					handleClose()
 				} else {
-					alert('校验码无效，请联系管理员！！保存本地')
-					window.localStorage.setItem(pathUrl, JSON.stringify(elJson))
-					handleClose()
+					// alert('校验码无效，请联系管理员！！保存本地')
+					// window.localStorage.setItem(pathUrl, JSON.stringify(elJson))
+					// handleClose()
 				}
        
       }

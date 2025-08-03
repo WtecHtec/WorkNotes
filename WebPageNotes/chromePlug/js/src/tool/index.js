@@ -91,17 +91,17 @@ const elDatas = [
           }
         ]
       },
-      {
-        node: 'div',
-        params: { title: "保存",'data-type': 'save', class: 'hz-opt-img hz-save'},
-        childrens: [
-          {
-            node: 'img',
-            params: { url: '/img/popup/sure.png', class: 'wrap-image' , 
-            'data-type': 'save',}
-          }
-        ]
-      },
+      // {
+      //   node: 'div',
+      //   params: { title: "保存",'data-type': 'save', class: 'hz-opt-img hz-save'},
+      //   childrens: [
+      //     {
+      //       node: 'img',
+      //       params: { url: '/img/popup/sure.png', class: 'wrap-image' , 
+      //       'data-type': 'save',}
+      //     }
+      //   ]
+      // },
 
     ]
   }
