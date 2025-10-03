@@ -21,8 +21,7 @@ import json
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-from elevenlabs import stream
-from elevenlabs.client import ElevenLabs
+
 
 load_dotenv()  # 加载环境变量
 
@@ -32,10 +31,12 @@ load_dotenv()  # 加载环境变量
 
 
 
-# 星火大模型配置
-XUNFEI_API_URL = "https://spark-api-open.xf-yun.com/v1/chat/completions"
-XUNFEI_API_KEY = os.getenv("XUNFEI_API_KEY", "")  # 从环境变量获取API密钥
-print(f"XUNFEI_API_KEY: {XUNFEI_API_KEY}")
+# 智谱
+ZHIPU_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "")  # 从环境变量获取API密钥
+print(f"ZHIPU_API_KEY: {ZHIPU_API_KEY}")
+
+# ASR 模型配置 https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20.tar.bz2
 ASR_MODEL_DIR = "./models/asr/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20/"
 ASR_ENCODER_MODEL = os.path.join(ASR_MODEL_DIR, "encoder-epoch-99-avg-1.int8.onnx")
 ASR_DECODER_MODEL = os.path.join(ASR_MODEL_DIR, "decoder-epoch-99-avg-1.onnx")
@@ -46,16 +47,13 @@ ASR_RULE_FSTS =  os.path.join(ASR_MODEL_DIR, "itn_zh_number.fst")
 
 
 
+#  TTS 模型配置 https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-icefall-zh-aishell3.tar.bz2
 TTS_MODEL_DIR = "./models/tts/vits-icefall-zh-aishell3/"
 TTS_MODEL_FILE = os.path.join(TTS_MODEL_DIR, "model.onnx")
 TTS_LEXICON_FILE = os.path.join(TTS_MODEL_DIR, "lexicon.txt")
 TTS_TOKENS_FILE = os.path.join(TTS_MODEL_DIR, "tokens.txt")
 
-ELEVENLABS_API_KEY =  os.getenv("ELEVENLABS_API_KEY", "")
-print(f"ELEVENLABS_API_KEY: {ELEVENLABS_API_KEY}")
-client = ElevenLabs(
-    api_key=ELEVENLABS_API_KEY
-)
+
 
 
 
@@ -130,15 +128,15 @@ except Exception as e:
 输入: 语音识别转换后的文本
 输出: AI助手的回复文本
 """
-async def call_xunfei_api(text):
+async def call_zhipu_llm_api(text):
     """调用讯飞星火大模型API"""
     headers = {
-        "Authorization": f"Bearer {XUNFEI_API_KEY}",
+        "Authorization": f"Bearer {ZHIPU_API_KEY}",
         "Content-Type": "application/json"
     }
     
     data = {
-        "model": "generalv3.5",
+        "model": "glm-4.5-flash",
         "messages": [
             {
                 "role": "user",
@@ -150,10 +148,11 @@ async def call_xunfei_api(text):
     
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(XUNFEI_API_URL, headers=headers, json=data) as response:
+            async with session.post(ZHIPU_API_URL, headers=headers, json=data) as response:
                 if response.status == 200:
                     result = await response.json()
-                    if result.get("code") == 0:
+                    print(f"星火API调用失败: {result}")
+                    if result.get("choices") and result["choices"][0].get("message"):
                         content = result["choices"][0]["message"]["content"]
                         return content
                     else:
@@ -314,7 +313,7 @@ class AudioTrackReceiver(MediaStreamTrack):
                         asr_id = asr_id + 1
                         # 使用TTS生成语音
                         if tts_model:
-                            response = await call_xunfei_api(result)
+                            response = await call_zhipu_llm_api(result)
                             if response == None :
                                 print("星火API调用失败")
                                 return;

@@ -1,15 +1,32 @@
-fastapi
-uvicorn[standard]
-websockets
-python-dotenv
-httpx
-# STT/TTS: sherpa-onnx
-sherpa-onnx
-# 音频处理库 (用于格式转换)
-pydub 
-numpy 
-# WebRTC for Python
-aiortc
-av
-webrtcvad
-dotenv
+aiohappyeyeballs==2.6.1
+aiohttp==3.12.15
+aioice==0.10.1
+aiortc==1.13.0
+aiosignal==1.4.0
+attrs==25.3.0
+av==14.4.0
+cffi==2.0.0
+cryptography==46.0.2
+dnspython==2.8.0
+dotenv==0.9.9
+frozenlist==1.7.0
+google-crc32c==1.7.1
+idna==3.10
+ifaddr==0.2.0
+multidict==6.6.4
+numpy==2.3.3
+pip==25.2
+propcache==0.3.2
+pycparser==2.23
+pydub==0.25.1
+pyee==13.0.0
+pylibsrtp==0.12.0
+pyopenssl==25.3.0
+python-dotenv==1.1.1
+setuptools==80.9.0
+sherpa-onnx==1.12.14
+sherpa-onnx-core==1.12.14
+soundfile==0.13.1
+typing-extensions==4.15.0
+webrtcvad==2.0.10
+yarl==1.20.1
