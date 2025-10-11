@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Proxy 响应式实现 - 纯 Proxy (已修复)</title>
+<style>
+  body { font-family: sans-serif; margin: 2em; }
+  input { margin-top: 1em; padding: 4px; margin-right: 10px; }
+  button { margin-top: 1em; padding: 4px 8px; margin-right: 10px; }
+  .container { margin-bottom: 20px; }
+  .v-model-input { border: 2px solid #28a745; }
+</style>
+</head>
+<body>
+
+    <div id="app">
+        <div class="container">
+            <p>姓名：<span data-bind="name">{{ name }}</span></p>
+            <p>年龄：<span data-bind="age">{{ age }}</span></p>
+            <p>列表：<span data-bind="list.join(', ')">{{ list.join(', ') }}</span></p>
+            <p>列表长度：<span data-bind="list.length">{{ list.length }}</span></p>
+        </div>
+        
+        <div class="container">
+            <h3>v-model 双向绑定</h3>
+            <input type="text" v-model="name" placeholder="输入姓名（v-model绑定）" class="v-model-input" />
+            <input type="number" v-model="age" placeholder="输入年龄（v-model绑定）" class="v-model-input" />
+        </div>
+        
+        <div class="container">
+            <h3>手动触发输入框</h3>
+            <input type="text" id="nameInput" placeholder="输入新姓名" />
+            <button id="changeName">修改姓名</button>
+        </div>
+        
+        <div class="container">
+            <input type="number" id="ageInput" placeholder="输入新年龄" />
+            <button id="changeAge">修改年龄</button>
+        </div>
+        
+        <div class="container">
+            <input type="number" id="addNumber" placeholder="输入要添加的数字" />
+            <button id="addToList">添加到列表</button>
+            <button id="removeFromList">移除最后一个</button>
+        </div>
+        
+        <div class="container">
+            <button id="btn">批量修改</button>
+        </div>
+    </div>
+      
+    <script>
+        // ========= Proxy 响应式核心 ==========
+        let activeEffect = null;
+        
+        function watchEffect(effect) {
+          activeEffect = effect;
+          effect();
+          activeEffect = null;
+        }
+      
+        const targetMap = new WeakMap();
+        
+        function track(target, key) {
+          if (!activeEffect) return;
+          let depsMap = targetMap.get(target);
+          if (!depsMap) {
+            depsMap = new Map();
+            targetMap.set(target, depsMap);
+          }
+          let dep = depsMap.get(key);
+          if (!dep) {
+            dep = new Set();
+            depsMap.set(key, dep);
+          }
+          dep.add(activeEffect);
+        }
+      
+        function trigger(target, key) {
+          const depsMap = targetMap.get(target);
+          if (!depsMap) return;
+          const dep = depsMap.get(key);
+          if (dep) dep.forEach(fn => fn());
+        }
+      
+        // ========= 纯 Proxy 响应式实现 (已修复) ==========
+        function reactive(obj) {
+          if (typeof obj !== 'object' || obj === null) return obj;
+          
+          if (obj.__isReactive) return obj;
+          
+          const proxy = new Proxy(obj, {
+            // [FIXED] 合并了两个 get 处理器
+            get(target, key, receiver) {
+             
+              if (key === '__isReactive') return true;
+              
+              const result = Reflect.get(target, key, receiver);
+              
+              track(target, key);
+              
+              // 检查是否为数组的修改方法
+              if (Array.isArray(target) && ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'].includes(key)) {
+                // 返回一个包装函数，在执行原始方法后触发更新
+                return function(...args) {
+                  const methodResult = result.apply(target, args);
+                  // [FIXED] 触发 'length' 的更新。
+                  // 因为数组的添加、删除等操作会影响其长度，
+                  // 而 UI 中的 .join() 和 .length 都依赖于长度的变化。
+                  trigger(target, 'length');
+                  return methodResult;
+                };
+              }
+              
+              // 如果结果是对象，递归创建响应式
+              if (typeof result === 'object' && result !== null) {
+                return reactive(result);
+              }
+              
+              return result;
+            },
+            
+            set(target, key, value, receiver) {
+              console.log('get', key);
+              const oldValue = target[key];
+              // 检查数组长度是否会发生变化 (例如，添加新元素)
+              const hadKey = Array.isArray(target) && target.hasOwnProperty(key);
+              const result = Reflect.set(target, key, value, receiver);
+              
+              if (oldValue !== value) {
+                trigger(target, key);
+                // 如果是为数组添加了新元素，也需要触发 length 的更新
+                if (Array.isArray(target) && !hadKey) {
+                    trigger(target, 'length');
+                }
+              }
+              
+              return result;
+            },
+          });
+          
+          return proxy;
+        }
+      
+        // ========= v-model 指令实现 ==========
+        function bindVModel(element, expression, data) {
+          if (!element || !expression) return;
+          
+          watchEffect(() => {
+            const value = new Function('data', `with(data){return ${expression}}`)(data);
+            if (element.type === 'number') {
+              element.value = value || '';
+            } else {
+              element.value = value;
+            }
+          });
+          
+          element.addEventListener('input', (e) => {
+            const value = e.target.value;
+            try {
+              if (element.type === 'number') {
+                const numValue = parseFloat(value);
+                if (!isNaN(numValue)) {
+                  new Function('data', 'value', `with(data){${expression} = value}`)(data, numValue);
+                }
+              } else {
+                new Function('data', 'value', `with(data){${expression} = value}`)(data, value);
+              }
+            } catch (e) {
+              console.error('v-model 赋值错误:', expression, e);
+            }
+          });
+        }
+      
+        // ========= 模板绑定 ==========
+        function bindTemplate(selector, data) {
+          const el = document.querySelector(selector);
+          if (!el) return;
+          
+          const vModelElements = el.querySelectorAll('[v-model]');
+          vModelElements.forEach(element => {
+            const expression = element.getAttribute('v-model');
+            bindVModel(element, expression, data);
+          });
+          
+          const bindElements = el.querySelectorAll('[data-bind]');
+          bindElements.forEach(element => {
+            const expression = element.getAttribute('data-bind');
+            if (!expression) return;
+            
+            watchEffect(() => {
+              try {
+                // [FIXED] 修正了获取表达式值的方式，确保 join(', ') 能被正确执行
+                const value = new Function('data', `with(data){return ${expression}}`)(data);
+                element.textContent = Array.isArray(value) ? value.join(', ') : value;
+              } catch (e) {
+                console.error('模板表达式错误:', expression, e);
+                element.textContent = '';
+              }
+            });
+          });
+        }
+      
+        // ========= 事件绑定 ==========
+        const eventBindings = new Map();
+        
+        function bindEvents() {
+          const nameInput = document.getElementById('nameInput');
+          const changeNameBtn = document.getElementById('changeName');
+          if (nameInput && changeNameBtn && !eventBindings.has('changeName')) {
+            eventBindings.set('changeName', true);
+            changeNameBtn.onclick = () => {
+              const newName = nameInput.value.trim();
+              if (newName) {
+                data.name = newName;
+                nameInput.value = '';
+              }
+            };
+          }
+          
+          const ageInput = document.getElementById('ageInput');
+          const changeAgeBtn = document.getElementById('changeAge');
+          if (ageInput && changeAgeBtn && !eventBindings.has('changeAge')) {
+            eventBindings.set('changeAge', true);
+            changeAgeBtn.onclick = () => {
+              const newAge = parseInt(ageInput.value);
+              if (!isNaN(newAge)) {
+                data.age = newAge;
+                ageInput.value = '';
+              }
+            };
+          }
+          
+          const addNumberInput = document.getElementById('addNumber');
+          const addToListBtn = document.getElementById('addToList');
+          if (addNumberInput && addToListBtn && !eventBindings.has('addToList')) {
+            eventBindings.set('addToList', true);
+            addToListBtn.onclick = () => {
+              const number = parseInt(addNumberInput.value);
+              if (!isNaN(number)) {
+                data.list.push(number); // 现在这里会触发响应式更新
+                addNumberInput.value = '';
+              }
+            };
+          }
+          
+          const removeFromListBtn = document.getElementById('removeFromList');
+          if (removeFromListBtn && !eventBindings.has('removeFromList')) {
+            eventBindings.set('removeFromList', true);
+            removeFromListBtn.onclick = () => {
+              if (data.list.length > 0) {
+                data.list.pop(); // 这里也会触发响应式更新
+              }
+            };
+          }
+          
+          const batchBtn = document.getElementById('btn');
+          if (batchBtn && !eventBindings.has('batchBtn')) {
+            eventBindings.set('batchBtn', true);
+            batchBtn.onclick = () => {
+              data.name = '李四';
+              data.age = 25;
+              data.list.push(4, 5, 6); // 同样会触发响应式更新
+            };
+          }
+        }
+      
+        // ========= 测试 ==========
+        const data = reactive({
+          name: '张三',
+          age: 18,
+          list: [1, 2, 3]
+        });
+      
+        bindTemplate('#app', data);
+        bindEvents();
+
+        setTimeout(() => {
+           data.city = "122"
+        }, 1000 * 2);
+       
+
+    </script>
+
+</body>
+</html>

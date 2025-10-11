@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Mini Vue2 响应式实现</title>
+<style>
+  body { font-family: sans-serif; margin: 2em; }
+  input { margin-top: 1em; padding: 4px; margin-right: 10px; }
+  button { margin-top: 1em; padding: 4px 8px; margin-right: 10px; }
+  .container { margin-bottom: 20px; }
+  .reactive-input { border: 2px solid #007bff; }
+</style>
+</head>
+<body>
+
+    <div id="app">
+        <div class="container">
+            <p>姓名：<span data-bind="name">{{ name }}</span></p>
+            <p>年龄：<span data-bind="age">{{ age }}</span></p>
+            <p>列表：<span data-bind="list">{{ list.join(', ') }}</span></p>
+            <p>列表长度：<span data-bind="list.length">{{ list.length }}</span></p>
+        </div>
+        
+        <div class="container">
+            <h3>实时响应式输入框</h3>
+            <input type="text" id="reactiveNameInput" placeholder="输入姓名（实时更新）" class="reactive-input" />
+            <input type="number" id="reactiveAgeInput" placeholder="输入年龄（实时更新）" class="reactive-input" />
+        </div>
+        
+        <div class="container">
+            <h3>手动触发输入框</h3>
+            <input type="text" id="nameInput" placeholder="输入新姓名" />
+            <button id="changeName">修改姓名</button>
+        </div>
+        
+        <div class="container">
+            <input type="number" id="ageInput" placeholder="输入新年龄" />
+            <button id="changeAge">修改年龄</button>
+        </div>
+        
+        <div class="container">
+            <input type="number" id="addNumber" placeholder="输入要添加的数字" />
+            <button id="addToList">添加到列表</button>
+            <button id="removeFromList">移除最后一个</button>
+        </div>
+        
+        <div class="container">
+            <button id="btn">批量修改</button>
+        </div>
+    </div>
+      
+    <script>
+        // ========= 响应式核心 ==========
+        let activeEffect = null;
+        function watchEffect(effect) {
+          activeEffect = effect;
+          effect();
+          activeEffect = null;
+        }
+      
+        const targetMap = new WeakMap();
+        function track(target, key) {
+          if (!activeEffect) return;
+          let depsMap = targetMap.get(target);
+          if (!depsMap) {
+            depsMap = new Map();
+            targetMap.set(target, depsMap);
+          }
+          let dep = depsMap.get(key);
+          if (!dep) {
+            dep = new Set();
+            depsMap.set(key, dep);
+          }
+          dep.add(activeEffect);
+        }
+      
+        function trigger(target, key) {
+          const depsMap = targetMap.get(target);
+          if (!depsMap) return;
+          const dep = depsMap.get(key);
+          if (dep) dep.forEach(fn => fn());
+        }
+      
+        // ========= 数组方法拦截 ==========
+        const arrayProto = Array.prototype;
+        const arrayMethods = Object.create(arrayProto);
+        ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']
+          .forEach(method => {
+            const original = arrayProto[method];
+            Object.defineProperty(arrayMethods, method, {
+              value: function(...args) {
+                const result = original.apply(this, args);
+                // 修复：正确触发数组响应式更新
+                const parent = this._parent;
+                const key = this._key;
+                if (parent && key) {
+                  trigger(parent, key);
+                }
+                return result;
+              }
+            });
+          });
+      
+        // ========= observe 主函数 ==========
+        function observe(obj, parent = null, key = null) {
+          if (typeof obj !== 'object' || obj === null) return obj;
+      
+          if (Array.isArray(obj)) {
+            obj._parent = parent;
+            obj._key = key;
+            Object.setPrototypeOf(obj, arrayMethods);
+            obj.forEach((item, index) => observe(item, obj, index));
+          } else {
+            Object.keys(obj).forEach(k => defineReactive(obj, k, obj[k], parent, key));
+          }
+      
+          return obj;
+        }
+      
+        function defineReactive(obj, key, val, parent = null, parentKey = null) {
+          observe(val, obj, key);
+          Object.defineProperty(obj, key, {
+            get() {
+              track(obj, key);
+              return val;
+            },
+            set(newVal) {
+              console.log('set', key);
+              if (newVal !== val) {
+                val = newVal;
+                observe(newVal, obj, key);
+                trigger(obj, key);
+              }
+            }
+          });
+        }
+      
+        // ========= 双向绑定函数 ==========
+        const inputBindings = new Map();
+        
+        function bindVModel(inputEl, dataKey, data) {
+          const input = inputEl;
+          if (!input) return;
+          
+          if (inputBindings.has(inputId)) return;
+          inputBindings.set(inputId, true);
+          
+          // 数据变化时更新输入框
+          watchEffect(() => {
+            input.value = data[dataKey];
+          });
+          
+          // 输入框变化时更新数据
+          input.addEventListener('input', (e) => {
+            const value = e.target.value;
+            if (dataKey === 'age') {
+              const numValue = parseInt(value);
+              if (!isNaN(numValue)) {
+                data[dataKey] = numValue;
+              }
+            } else {
+              data[dataKey] = value;
+            }
+          });
+        }
+      
+        // ========= 改进的模板绑定 ==========
+        function bindTemplate(selector, data) {
+          const el = document.querySelector(selector);
+          if (!el) return;
+
+          
+          const vModelElements = el.querySelectorAll('[v-model]');
+          vModelElements.forEach(element => {
+            const expression = element.getAttribute('v-model');
+            bindVModel(element, expression, data);
+          });
+          
+          
+          // 找到所有需要绑定的元素
+          const bindElements = el.querySelectorAll('[data-bind]');
+          
+          // 为每个绑定元素创建更新函数
+          bindElements.forEach(element => {
+            const expression = element.getAttribute('data-bind');
+            if (!expression) return;
+            
+            // 创建更新函数
+            watchEffect(() => {
+              try {
+                const value = new Function('data', `with(data){return ${expression}}`)(data);
+                element.textContent = value;
+              } catch (e) {
+                console.error('模板表达式错误:', expression, e);
+                element.textContent = '';
+              }
+            });
+          });
+        }
+      
+        // ========= 事件绑定 ==========
+        const eventBindings = new Map();
+        
+        function bindEvents() {
+          // 修改姓名
+          const nameInput = document.getElementById('nameInput');
+          const changeNameBtn = document.getElementById('changeName');
+          if (nameInput && changeNameBtn && !eventBindings.has('changeName')) {
+            eventBindings.set('changeName', true);
+            changeNameBtn.onclick = () => {
+              const newName = nameInput.value.trim();
+              if (newName) {
+                data.name = newName;
+                nameInput.value = '';
+              }
+            };
+          }
+          
+          // 修改年龄
+          const ageInput = document.getElementById('ageInput');
+          const changeAgeBtn = document.getElementById('changeAge');
+          if (ageInput && changeAgeBtn && !eventBindings.has('changeAge')) {
+            eventBindings.set('changeAge', true);
+            changeAgeBtn.onclick = () => {
+              const newAge = parseInt(ageInput.value);
+              if (!isNaN(newAge)) {
+                data.age = newAge;
+                ageInput.value = '';
+              }
+            };
+          }
+          
+          // 添加到列表
+          const addNumberInput = document.getElementById('addNumber');
+          const addToListBtn = document.getElementById('addToList');
+          if (addNumberInput && addToListBtn && !eventBindings.has('addToList')) {
+            eventBindings.set('addToList', true);
+            addToListBtn.onclick = () => {
+              const number = parseInt(addNumberInput.value);
+              if (!isNaN(number)) {
+                data.list.push(number);
+                addNumberInput.value = '';
+              }
+            };
+          }
+          
+          // 移除列表项
+          const removeFromListBtn = document.getElementById('removeFromList');
+          if (removeFromListBtn && !eventBindings.has('removeFromList')) {
+            eventBindings.set('removeFromList', true);
+            removeFromListBtn.onclick = () => {
+              if (data.list.length > 0) {
+                data.list.pop();
+              }
+            };
+          }
+          
+          // 批量修改
+          const batchBtn = document.getElementById('btn');
+          if (batchBtn && !eventBindings.has('batchBtn')) {
+            eventBindings.set('batchBtn', true);
+            batchBtn.onclick = () => {
+              data.name = '李四';
+              data.age = 25;
+              data.list.push(4, 5, 6);
+            };
+          }
+        }
+      
+        // ========= 测试 ==========
+        const data = observe({
+          name: '张三',
+          age: 18,
+          list: [1, 2, 3]
+        });
+      
+        bindTemplate('#app', data);
+        bindEvents();
+        
+        // 绑定实时响应式输入框
+        // bindInput('reactiveNameInput', 'name', data);
+        // bindInput('reactiveAgeInput', 'age', data);
+
+        setTimeout(() => {
+           data.city = "122"
+        }, 1000 * 2);
+    </script>
+
+</body>
+</html>
