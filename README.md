@@ -41,3 +41,4 @@
 39. pyRTC -- 基于python实现的实时语音识别、语音合成LLM + ASR + TTS (SherpaOnnx)
 40. mobile_table -- 支持移动端合并单元格的表格组件
 50. voerkai18n-vite-plugin -- 解决voerkai18n 在ios16正则表达式兼容问题
+51. js-observe -- defineProperty vs. Proxy
