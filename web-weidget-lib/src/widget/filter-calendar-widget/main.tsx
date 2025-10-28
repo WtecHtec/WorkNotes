@@ -1,13 +1,13 @@
 import { h, render } from 'preact';
-import FilterWidget from './FilterWidget';
+import FilterCalendarWidget from './FilterCalendarWidget';
 import { IFilterItem, IFilterProp } from './types';
-import cssText from './FilterWidget.css?raw';
-class FilterWidgetElement extends HTMLElement {
+import '@/widget/styles/tailwind.css';
+class FilterCalendarWidgetElement extends HTMLElement {
+  private _shadow: ShadowRoot;
   private _mounted = false;
   private props: IFilterProp = {
     title: '选择',
   };
-  private _shadow: ShadowRoot;
 
   static get observedAttributes() {
     return ['title'];
@@ -16,6 +16,9 @@ class FilterWidgetElement extends HTMLElement {
   constructor() {
     super();
     this._shadow = this.attachShadow({ mode: 'open' }); // 创建 shadow root
+    // const style = document.createElement('style');
+    // style.textContent = cssText;
+    // this._shadow.appendChild(style);
   }
 
   // 对外提供的方法
@@ -40,6 +43,7 @@ class FilterWidgetElement extends HTMLElement {
       ...props,
     };
 
+
     this._render();
   }
   connectedCallback() {
@@ -55,7 +59,7 @@ class FilterWidgetElement extends HTMLElement {
 
   private _render() {
     if (!this._shadow) return;
-    render(<FilterWidget {...this.props} />, this._shadow);
+    render(<FilterCalendarWidget {...this.props} />, this._shadow);
   }
 
   /** ✅ 对外暴露更新入参的函数 */
@@ -72,7 +76,7 @@ class FilterWidgetElement extends HTMLElement {
   }
 }
 
-customElements.define('filter-widget', FilterWidgetElement);
+customElements.define('filter-calendar-widget', FilterCalendarWidgetElement);
 
 // 自动挂载
 // window.addEventListener('DOMContentLoaded', () => {
