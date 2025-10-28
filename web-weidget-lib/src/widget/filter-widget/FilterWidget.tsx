@@ -5,7 +5,7 @@ import { getSearchParams } from '@/utils/common';
 import IntelligencePriceAPI from '../../api/intelligencePrice';
 import { useInfiniteScroll } from './_hooks/useInfiniteScroll';
 import { IFilterItem, IFilterProp } from './types';
-
+import styleName from './FilterWidget.module.css';
 export default function FilterWidget(prop: IFilterProp) {
   const hotelCode = getSearchParams('hotel_code');
   const [visible, setVisible] = useState(false);
@@ -117,8 +117,8 @@ export default function FilterWidget(prop: IFilterProp) {
   }, [loadMoreData]);
   return (
     <>
-      <div className='filter-container'>
-        <div onClick={handleOpenPopup} className='cursor-pointer'>
+      <div className={styleName.filter_container}>
+        <div onClick={handleOpenPopup} className={ styleName.cursor_pointer}>
           {selectedItem ? selectedItem.label : '--'}
         </div>
         <ChevronDown />
@@ -132,16 +132,16 @@ export default function FilterWidget(prop: IFilterProp) {
       >
         {
           (
-            <div className='popup-container'>
+            <div className={styleName.popup_container}>
               {/* 标题栏 */}
-              <div className='popup-header'>
-                <h3 className='popup-title'>{prop.title || '-'}</h3>
+              <div className={styleName.popup_header}>
+                <h3 className={styleName.popup_title}>{prop.title || '-'}</h3>
               </div>
 
               {/* 可滚动的内容区域 */}
-              <div ref={scrollContainerRef} className='popup-content'>
+              <div ref={scrollContainerRef} className={styleName.popup_content}>
                 {/* 数据列表 */}
-                <div className='popup-list'>
+                <div className={styleName.popup_list}>
                   {data.map((item) => (
                     <div
                       key={item.value}
@@ -150,11 +150,11 @@ export default function FilterWidget(prop: IFilterProp) {
                           ? selectedItemRef
                           : null
                       }
-                      className={`popup-item ${selectedItem?.value === item.value ? 'popup-item-active' : ''}`}
+                      className={`${styleName.popup_item } ${selectedItem?.value === item.value ? styleName.popup_item_active : ''}`}
                       onClick={() => handleItemSelect(item)}
                     >
                       <div
-                        className={`popup-item-time ${selectedItem?.value === item.value ? 'popup-item-time-active' : ''}`}
+                        className={`${styleName.popup_item_time} popup-item-time ${selectedItem?.value === item.value ? styleName.popup_item_time_active : ''}`}
                       >
                         {item.label}
                       </div>
@@ -164,20 +164,20 @@ export default function FilterWidget(prop: IFilterProp) {
 
                 {/* 哨兵元素 - 触发加载更多 */}
                 {hasMore && (
-                  <div ref={sentinelRef} className='popup-sentinel' />
+                  <div ref={sentinelRef} className={styleName.popup_sentinel} />
                 )}
 
                 {/* 加载更多指示器 */}
                 {isLoading && (
-                  <div className='popup-loading'>
+                  <div className={styleName.popup_loading}>
                     <DotLoading color='primary' />
-                    <span className='popup-loading-text'>加载中...</span>
+                    <span className={styleName.popup_loading_text}>加载中...</span>
                   </div>
                 )}
 
                 {/* 没有更多数据提示 */}
                 {!hasMore && !isLoading && (
-                  <div className='popup-nomore'>没有更多数据了</div>
+                  <div className={styleName.popup_nomore}>没有更多数据了</div>
                 )}
               </div>
             </div>

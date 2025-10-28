@@ -1,13 +1,13 @@
 import { h, render } from 'preact';
 import FilterWidget from './FilterWidget';
 import { IFilterItem, IFilterProp } from './types';
-import cssText from './FilterWidget.css?raw';
+
 class FilterWidgetElement extends HTMLElement {
   private _mounted = false;
   private props: IFilterProp = {
     title: '选择',
   };
-  private _shadow: ShadowRoot;
+  private _root: HTMLDivElement | null = null;
 
   static get observedAttributes() {
     return ['title'];
@@ -15,7 +15,7 @@ class FilterWidgetElement extends HTMLElement {
 
   constructor() {
     super();
-    this._shadow = this.attachShadow({ mode: 'open' }); // 创建 shadow root
+    
   }
 
   // 对外提供的方法
@@ -40,6 +40,8 @@ class FilterWidgetElement extends HTMLElement {
       ...props,
     };
 
+    this._root = document.createElement('div');
+    this.appendChild(this._root);
     this._render();
   }
   connectedCallback() {
@@ -54,8 +56,8 @@ class FilterWidgetElement extends HTMLElement {
   }
 
   private _render() {
-    if (!this._shadow) return;
-    render(<FilterWidget {...this.props} />, this._shadow);
+    if (!this._root) return;
+    render(<FilterWidget {...this.props} />, this._root);
   }
 
   /** ✅ 对外暴露更新入参的函数 */
@@ -65,8 +67,8 @@ class FilterWidgetElement extends HTMLElement {
   }
 
   unmount() {
-    if (this._shadow) {
-      render(null, this._shadow);
+    if (this._root) {
+      render(null, this._root);
     }
     this._mounted = false;
   }
