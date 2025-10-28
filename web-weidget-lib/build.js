@@ -4,10 +4,14 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import path, { dirname, resolve } from 'path';
 
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const srcDir = path.resolve(__dirname, 'src/widget/');
+
+
 
 const entries = Object.fromEntries(
   fs
@@ -26,6 +30,8 @@ const entries = Object.fromEntries(
       return [dir, fs.existsSync(mainTsx) ? mainTsx : mainJsx];
     })
 );
+
+
 
 for (const key in entries) {
   await build({

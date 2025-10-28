@@ -1,12 +1,17 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
-import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
+import tailwindcss from '@tailwindcss/vite'
+import cssInjectedByJs from 'vite-plugin-css-injected-by-js';
 import fs from 'fs';
 import path, { join } from 'path';
+import autoprefixer from 'autoprefixer';
 
 const srcDir = path.resolve(__dirname, 'src/widget/');
 
 const entry = process.env.ENTRY || 'filter-widget';
+
+
+
 
 // 自动扫描 src 下每个组件目录，支持 .tsx 和 .jsx
 const entries = Object.fromEntries(
@@ -38,7 +43,9 @@ export default defineConfig({
         jsxImportSource: 'preact',
       },
     }),
-    cssInjectedByJsPlugin(),
+    tailwindcss(),
+    cssInjectedByJs(),
+   
   ],
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),

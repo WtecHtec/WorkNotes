@@ -2,18 +2,22 @@ import { render } from 'preact';
 import TableWidget from './TableWidget';
 import './TableWidget.css';
 import { ITableProp } from './types';
-
 class TableWidgetElement extends HTMLElement {
   private _root: HTMLDivElement | null = null;
   private _mounted = false;
   private props: ITableProp | any = {};
-
+  private _shadow: ShadowRoot | null = null;
   static get observedAttributes() {
     return [];
   }
 
   constructor() {
     super();
+    // this._shadow = this.attachShadow({ mode: 'open' });
+    // const sheet = new CSSStyleSheet();
+    // sheet.replaceSync(cssText);
+    // this._shadow.adoptedStyleSheets = [...this._shadow.adoptedStyleSheets, sheet];
+
   }
 
   // 对外提供的方法

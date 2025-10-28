@@ -1,13 +1,15 @@
 import { h, render } from 'preact';
 import FilterCalendarWidget from './FilterCalendarWidget';
 import { IFilterItem, IFilterProp } from './types';
-import '@/widget/styles/tailwind.css';
+// import '@/widget/styles/tailwind.css';
+import cssText from '@/widget/styles/tailwind.css?inline';
 class FilterCalendarWidgetElement extends HTMLElement {
-  private _shadow: ShadowRoot;
+  private _root: HTMLDivElement | null = null;
   private _mounted = false;
   private props: IFilterProp = {
     title: '选择',
   };
+  private _shadow: ShadowRoot;
 
   static get observedAttributes() {
     return ['title'];
@@ -15,10 +17,11 @@ class FilterCalendarWidgetElement extends HTMLElement {
 
   constructor() {
     super();
-    this._shadow = this.attachShadow({ mode: 'open' }); // 创建 shadow root
-    // const style = document.createElement('style');
-    // style.textContent = cssText;
-    // this._shadow.appendChild(style);
+    this._shadow = this.attachShadow({ mode: 'open' });
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(cssText);
+    this._shadow.adoptedStyleSheets = [...this._shadow.adoptedStyleSheets, sheet];
+
   }
 
   // 对外提供的方法
@@ -42,7 +45,8 @@ class FilterCalendarWidgetElement extends HTMLElement {
       },
       ...props,
     };
-
+    // this._root = document.createElement('div');
+    // this.appendChild(this._root);
 
     this._render();
   }
