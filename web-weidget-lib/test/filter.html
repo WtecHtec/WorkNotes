@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Preact Widget Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,minimum-scale=1,maximum-scale=1,viewport-fit=cover" />
+</head>
+<body>
+    <filter-widget title="选择时间"></filter-widget>
+    <div style="margin-top: 300px; font-size: 1.6rem;"> test</div>
+<script module src="../dist/filter-widget//filter-widget.iife.js"></script>
+<script>
+
+const widget = document.querySelector('filter-widget');
+setTimeout(() => {
+    widget.updateProps({
+      title: "测试修改"
+    });
+  }, 6000);
+</script>
+
+</body>
+</html>

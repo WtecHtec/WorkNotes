@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Preact Widget Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,minimum-scale=1,maximum-scale=1,viewport-fit=cover" />
+</head>
+<body>
+    <table-widget title="选择时间"></table-widget>
+    <div style="margin-top: 300px; font-size: 1.6rem;"> test</div>
+<script src="../dist/table-widget/table-widget.iife.js"></script>
+<script>
+
+const columns = [
+  { key: 'roomType', title: '房型', minWidth: '120px', align: 'left',
+   render: (value) => {
+          return `<span style="color: red;"> ${value}</span>`
+   } },
+  { key: 'price', title: '价格 (元)', minWidth: '100px', align: 'right' },
+  { key: 'available', title: '可用房间数', minWidth: '120px', align: 'center' },
+  { key: 'publishTime', title: '发布时间', minWidth: '160px', align: 'center' },
+];
+
+const dataSource = [
+  {
+    id: 1,
+    roomType: "豪华大床房",
+    price: 800,
+    available: 5,
+    publishTime: "2025-10-28 08:30",
+  },
+  {
+    id: 2,
+    roomType: "商务双人房",
+    price: 600,
+    available: 3,
+    publishTime: "2025-10-27 14:15",
+  },
+  {
+    id: 3,
+    roomType: "标准单人房",
+    price: 400,
+    available: 10,
+    publishTime: "2025-10-28 09:00",
+  },
+  {
+    id: 4,
+    roomType: "套房",
+    price: 1200,
+    available: 2,
+    publishTime: "2025-10-26 18:45",
+  },
+  {
+    id: 5,
+    roomType: "经济房",
+    price: 350,
+    available: 8,
+    publishTime: "2025-10-29 11:00",
+  },
+  {
+    id: 6,
+    roomType: "家庭套房",
+    price: 1500,
+    available: 1,
+    publishTime: "2025-10-28 16:30",
+  },
+  {
+    id: 7,
+    roomType: "海景房",
+    price: 950,
+    available: 4,
+    publishTime: "2025-10-27 20:10",
+  },
+  {
+    id: 8,
+    roomType: "阁楼房",
+    price: 700,
+    available: 6,
+    publishTime: "2025-10-28 07:20",
+  },
+];
+
+const widget = document.querySelector('table-widget');
+widget.updateProps({
+        columns,
+        dataSource
+    });
+</script>
+
+</body>
+</html>

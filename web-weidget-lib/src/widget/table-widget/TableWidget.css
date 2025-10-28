@@ -1,0 +1,78 @@
+/* 表格容器 */
+.table-container {
+    overflow-x: auto;
+}
+  
+.fixed-header {
+max-height: 600px; /* 可以根据传递的 maxHeightCls 来设置 */
+overflow-y: auto;
+}
+  
+/* 表格基本样式 */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+  
+/* 表头 */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+  
+  /* 默认表头样式 */
+  .header-default {
+    background-color: #1d4ed8; /* bg-blue-700 */
+    color: white; /* text-white */
+  }
+  
+  /* 表头单元格 */
+  .table-header-cell {
+    border: 1px solid #e5e7eb; /* border-border */
+    white-space: nowrap; /* whitespace-nowrap */
+    padding: 0.5rem 1rem; /* p-2 */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
+  }
+  
+  /* 自定义列宽 */
+  .table-header-cell[style*="min-width"] {
+    min-width: var(--min-width);
+  }
+  
+  /* 单元格 */
+  .table-cell {
+    border: 1px solid #e5e7eb; /* border-border */
+    padding: 0.5rem 1rem; /* p-2 */
+    font-size: 0.875rem; /* text-sm */
+    text-align: center;
+  }
+  
+  /* 根据对齐方式设置文本 */
+  .text-left {
+    text-align: left;
+  }
+  
+  .text-right {
+    text-align: right;
+  }
+  
+  .text-center {
+    text-align: center;
+  }
+  
+  /* 默认行样式 */
+  .row-default {
+    transition: background-color 0.3s ease;
+  }
+  
+  .row-default:hover {
+    background-color: rgba(107, 114, 128, 0.1); /* hover:bg-muted/50 */
+  }
+  
+  /* 自定义行样式 */
+  .row-custom {
+    background-color: #f3f4f6; /* 你可以添加其他自定义行样式 */
+  }
+  
