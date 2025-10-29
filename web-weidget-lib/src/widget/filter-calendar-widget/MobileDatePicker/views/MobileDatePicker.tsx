@@ -86,7 +86,7 @@ export function MobileDatePicker({
       setSelectedEndDate(end);
     }
     handleOverlayClick();
-    if (types.length === 1) {
+    if (types.length <= 1) {
       onConfirm?.(value);
     }
   };
