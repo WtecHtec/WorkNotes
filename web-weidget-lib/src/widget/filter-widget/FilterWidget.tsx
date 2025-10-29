@@ -121,7 +121,7 @@ export default function FilterWidget(prop: IFilterProp) {
         <div onClick={handleOpenPopup} className={styleName.cursor_pointer}>
           {selectedItem ? selectedItem.label : '--'}
         </div>
-        <ChevronDown />
+        <ChevronDown className='bg-black' />
       </div>
       <Popup
         visible={visible}

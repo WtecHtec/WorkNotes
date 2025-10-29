@@ -494,7 +494,7 @@ const DatePickerContent = ({
             onClick={() => setCurrentYear(currentYear - 10)}
             className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={20} color='#000' />
           </button>
           <span className='font-medium'>
             {startYear} - {startYear + 11}
@@ -503,7 +503,7 @@ const DatePickerContent = ({
             onClick={() => setCurrentYear(currentYear + 10)}
             className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} color='#000' />
           </button>
         </div>
         <div className='grid grid-cols-3 gap-3'>
@@ -591,7 +591,7 @@ const DatePickerContent = ({
               onClick={() => onClose()}
               className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
             >
-              <X size={20} />
+              <X size={20} color='#000' />
             </button>
           </div>
 
@@ -602,7 +602,7 @@ const DatePickerContent = ({
                 onClick={handlePrevMonth}
                 className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={20} color='#000' />
               </button>
               <span className='font-medium text-gray-800'>
                 {currentYear}年
@@ -614,7 +614,7 @@ const DatePickerContent = ({
                 onClick={handleNextMonth}
                 className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
               >
-                <ChevronRight size={20} />
+                <ChevronRight size={20} color='#000' />
               </button>
             </div>
           )}

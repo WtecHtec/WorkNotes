@@ -31,7 +31,7 @@ export default function FilterCalendarWidget(prop: IFilterCalendarProps) {
     <>
       <div className='flex items-center justify-center border-solid border-b border-b-gray-300 py-2 static top-0'>
         <div onClick={handleOpenPopup}>{prop.showLable}</div>
-        <ChevronDown onClick={handleOpenPopup} />
+        <ChevronDown onClick={handleOpenPopup} color='#000' />
       </div>
       {visible ? (
         <MobileDatePicker

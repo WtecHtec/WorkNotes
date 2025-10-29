@@ -17,7 +17,6 @@ class TableWidgetElement extends HTMLElement {
     // const sheet = new CSSStyleSheet();
     // sheet.replaceSync(cssText);
     // this._shadow.adoptedStyleSheets = [...this._shadow.adoptedStyleSheets, sheet];
-
   }
 
   // 对外提供的方法
