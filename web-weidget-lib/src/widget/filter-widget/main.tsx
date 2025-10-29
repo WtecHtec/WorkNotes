@@ -15,7 +15,6 @@ class FilterWidgetElement extends HTMLElement {
 
   constructor() {
     super();
-    
   }
 
   // 对外提供的方法

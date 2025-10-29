@@ -118,7 +118,7 @@ export default function FilterWidget(prop: IFilterProp) {
   return (
     <>
       <div className={styleName.filter_container}>
-        <div onClick={handleOpenPopup} className={ styleName.cursor_pointer}>
+        <div onClick={handleOpenPopup} className={styleName.cursor_pointer}>
           {selectedItem ? selectedItem.label : '--'}
         </div>
         <ChevronDown />
@@ -150,7 +150,7 @@ export default function FilterWidget(prop: IFilterProp) {
                           ? selectedItemRef
                           : null
                       }
-                      className={`${styleName.popup_item } ${selectedItem?.value === item.value ? styleName.popup_item_active : ''}`}
+                      className={`${styleName.popup_item} ${selectedItem?.value === item.value ? styleName.popup_item_active : ''}`}
                       onClick={() => handleItemSelect(item)}
                     >
                       <div
@@ -171,7 +171,9 @@ export default function FilterWidget(prop: IFilterProp) {
                 {isLoading && (
                   <div className={styleName.popup_loading}>
                     <DotLoading color='primary' />
-                    <span className={styleName.popup_loading_text}>加载中...</span>
+                    <span className={styleName.popup_loading_text}>
+                      加载中...
+                    </span>
                   </div>
                 )}
 

@@ -1,9 +1,16 @@
-export interface IFilterItem {
-  value: string;
-  label: string;
-}
+import {
+  IPickerType,
+  ISelectParam,
+} from '../filter-calendar-widget/MobileDatePicker/types';
 
-export interface IFilterProp {
-  title: string;
-  onChange?: (value: IFilterItem) => void;
+export interface IFilterCalendarProps {
+  showLable: string;
+  types?: IPickerType[];
+  type?: IPickerType;
+  value?: Date | null;
+  endValue?: Date | null;
+  range?: boolean;
+  onChange?: (params: ISelectParam) => void;
+  onConfirm?: (params: ISelectParam) => void;
+  onCancel?: () => void;
 }
