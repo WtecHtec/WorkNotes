@@ -58,6 +58,9 @@ const DatePickerContent = ({
     } else {
       window.document.getElementsByTagName('html')[0].style.overflow = 'auto';
     }
+    return () => {
+      window.document.getElementsByTagName('html')[0].style.overflow = 'auto';
+    };
   }, [showPicker, pickerType, selectedDate, selectedEndDate]);
 
   const handlePrevMonth = () => {
@@ -489,7 +492,7 @@ const DatePickerContent = ({
         <div className='flex items-center justify-between mb-4'>
           <button
             onClick={() => setCurrentYear(currentYear - 10)}
-            className='p-2 hover:bg-gray-100 rounded-lg'
+            className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
           >
             <ChevronLeft size={20} />
           </button>
@@ -498,7 +501,7 @@ const DatePickerContent = ({
           </span>
           <button
             onClick={() => setCurrentYear(currentYear + 10)}
-            className='p-2 hover:bg-gray-100 rounded-lg'
+            className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
           >
             <ChevronRight size={20} />
           </button>
@@ -586,7 +589,7 @@ const DatePickerContent = ({
             </h3>
             <button
               onClick={() => onClose()}
-              className='p-2 hover:bg-gray-100 rounded-lg'
+              className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
             >
               <X size={20} />
             </button>
@@ -597,7 +600,7 @@ const DatePickerContent = ({
             <div className='flex items-center justify-between mb-4'>
               <button
                 onClick={handlePrevMonth}
-                className='p-2 hover:bg-gray-100 rounded-lg'
+                className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
               >
                 <ChevronLeft size={20} />
               </button>
@@ -609,7 +612,7 @@ const DatePickerContent = ({
               </span>
               <button
                 onClick={handleNextMonth}
-                className='p-2 hover:bg-gray-100 rounded-lg'
+                className='p-2 hover:bg-gray-100 rounded-lg bg-gray-100'
               >
                 <ChevronRight size={20} />
               </button>
