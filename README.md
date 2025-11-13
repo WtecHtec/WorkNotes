@@ -44,3 +44,4 @@
 51. js-observe -- defineProperty vs. Proxy
 52. mock-lib -- 实现一个前端mock接口数据 lib
 53. web-weidget-lib -- 前端组件 lib
+54. FlexTable -- 支持固定列、行表格

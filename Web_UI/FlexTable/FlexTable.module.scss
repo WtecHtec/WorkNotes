@@ -1,0 +1,100 @@
+/* 容器样式 */
+.tableContainer {
+  background: white;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.scrollWrapper {
+  position: relative;
+  overflow: auto;
+}
+
+.tableContent {
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
+}
+
+/* 表头样式 */
+.tableHeader {
+  background: white;
+  display: flex;
+  color: white;
+  font-weight: 600;
+}
+
+.tableHeaderSticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.headerCell {
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #e8e8e8;
+  padding: 16px;
+}
+
+.headerCellFixed {
+  position: sticky;
+  background: white;
+}
+
+.headerCellFixedLeft {
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.15);
+}
+
+.headerCellFixedRight {
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 数据行样式 */
+.tableRow {
+  display: flex;
+  border-bottom: 1px solid #e8e8e8;
+  background: white;
+}
+
+.tableRowHover:hover {
+  background: #fafafa;
+}
+
+.tableRowSticky {
+  position: sticky;
+  z-index: 20;
+  font-weight: 500;
+}
+
+.tableRowFirst {
+  background: #e6f7ff;
+}
+
+.tableCell {
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #e8e8e8;
+  padding: 16px;
+}
+
+.tableCellFixed {
+  position: sticky;
+  background: white;
+}
+
+.tableCellFixedLeft {
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.08);
+}
+
+.tableCellFixedRight {
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.08);
+}
+
+.tableCellFirstRow {
+  background: #e6f7ff;
+}
+
+.tableCellFirstRowHover:hover {
+  background: #e6f7ff;
+}
