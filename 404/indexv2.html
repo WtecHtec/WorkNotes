@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Haunted Drive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Courier New', Courier, monospace; }
+        #canvas-container { width: 100vw; height: 100vh; display: block; }
+        
+        #scare-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: red; opacity: 0; pointer-events: none; z-index: 50;
+            mix-blend-mode: overlay; transition: opacity 0.05s;
+        }
+        .scare-active { opacity: 0.8 !important; }
+
+        .key-cap {
+            display: inline-flex; justify-content: center; align-items: center;
+            width: 2rem; height: 2rem; background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 4px;
+            color: #fff; margin: 0 2px; font-weight: bold;
+        }
+        
+        #loading { position: fixed; inset:0; background: #000; z-index: 100; display: flex; justify-content: center; align-items: center; color: #059669; }
+
+        /* 雷达样式 */
+        .radar-container {
+            width: 180px; height: 180px;
+            background: rgba(0, 15, 10, 0.9);
+            border: 2px solid rgba(16, 185, 129, 0.6);
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 25px rgba(0,0,0,0.9);
+        }
+        /* 十字准星 */
+        .radar-crosshair {
+            position: absolute; top: 50%; left: 50%; width: 100%; height: 100%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        .radar-crosshair::before { content:''; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: #10b981; }
+        .radar-crosshair::after { content:''; position: absolute; top: 0; left: 50%; height: 100%; width: 1px; background: #10b981; }
+
+        .radar-scan {
+            position: absolute; inset: 0; border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(16, 185, 129, 0.15) 60deg, transparent 60deg);
+            animation: radarSpin 3s linear infinite;
+        }
+        @keyframes radarSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="antialiased text-white select-none">
+
+    <div id="loading">正在加载引擎资源...</div>
+    <div id="scare-overlay"></div>
+
+    <div class="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col justify-between p-8 z-20">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-6xl font-bold text-red-600 drop-shadow-[0_2px_10px_rgba(220,38,38,0.8)]">404</h1>
+                <div class="mt-2 flex items-center gap-3">
+                    <span id="weather-badge" class="px-2 py-1 rounded text-xs border bg-black/50 backdrop-blur"></span>
+                    <span class="text-gray-400 text-sm">信号中断 // 寻找路标</span>
+                </div>
+            </div>
+            
+            <div class="bg-zinc-900/80 border border-zinc-700 p-4 rounded-lg backdrop-blur-sm text-xs text-gray-300">
+                <div class="mb-2 text-center text-zinc-500">CONTROL</div>
+                <div class="flex justify-center mb-1"><span class="key-cap">W</span></div>
+                <div class="flex justify-center">
+                    <span class="key-cap">A</span><span class="key-cap">S</span><span class="key-cap">D</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex justify-between items-end w-full mt-auto">
+            <div class="absolute left-1/2 transform -translate-x-1/2 bottom-8">
+                <div id="interaction-ui" class="text-center transition-all duration-300 opacity-0 translate-y-8">
+                    <div class="inline-block bg-emerald-950/90 border border-emerald-500/50 rounded-xl px-8 py-5 shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                        <div class="text-xl text-emerald-200 mb-1">前往 <span id="target-name" class="font-bold text-white text-2xl mx-1">???</span> ?</div>
+                        <div class="text-emerald-500 text-xs font-mono">按 <span class="bg-emerald-500 text-black px-1 rounded font-bold">ENTER</span> 确认跳转</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="radar-container pointer-events-auto ml-auto">
+                <div class="radar-scan"></div>
+                <div class="radar-crosshair"></div>
+                <canvas id="minimap" width="180" height="180" class="relative z-10"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        const CONFIG = {
+            // 配置多个路标，所有路标都会生成在地图上
+            destinations: [
+            { text: '主页', url: 'https://iam.xujingyichang.top/', color: '#10b981' }, // Emerald
+                { text: '博客', url: 'https://blogs.xujingyichang.top', color: '#3b82f6' }, // Blue
+                { text: 'GitHub', url: 'https://github.com/WtecHtec', color: '#8b5cf6' }, // Purple
+                { text: '联系我', url: 'https://iam.xujingyichang.top/', color: '#f59e0b' } // Amber
+            ],
+            weather: Math.random() > 0.5 ? 'rain' : 'fog', 
+            ghostCount: 15,
+            worldSize: 500 // 扩大一点地图
+        };
+
+        const wBadge = document.getElementById('weather-badge');
+        if (CONFIG.weather === 'rain') {
+            wBadge.innerText = '⛈️ 阴雨绵绵';
+            wBadge.className += ' border-blue-800 text-blue-300';
+        } else {
+            wBadge.innerText = '🌫️ 浓雾警告';
+            wBadge.className += ' border-gray-600 text-gray-300';
+        }
+
+        let scene, camera, renderer;
+        let car, wheels = [], rainSystem;
+        
+        // 🟢 变化：signPosts 变成数组，存储所有生成的路标对象
+        let signPosts = []; 
+        let currentActiveSign = null; // 当前靠近的路标数据
+
+        let ghosts = [];
+        let isCloseToSign = false;
+        let scareCooldown = 0;
+        
+        // 小地图变量
+        let minimapCtx;
+        // 雷达探测半径（世界单位），即小地图能显示多远
+        const radarRadius = 120; 
+        const canvasSize = 180;
+        const centerOffset = canvasSize / 2;
+        // 比例尺：画布像素 / 世界距离
+        const scale = (canvasSize / 2) / radarRadius; 
+
+        const input = { w: false, a: false, s: false, d: false };
+        const physics = { speed: 0, acceleration: 0.02, friction: 0.96, maxSpeed: 0.8, turnSpeed: 0.045 };
+
+        window.onload = function() {
+            if (typeof THREE === 'undefined') {
+                document.getElementById('loading').innerText = "加载失败: Unpkg 连接超时";
+                document.getElementById('loading').style.color = "red";
+                return;
+            }
+            try {
+                init();
+                document.getElementById('loading').style.display = 'none';
+                animate();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').innerText = "错误: " + e.message;
+            }
+        };
+
+        function init() {
+            const canvas = document.getElementById('minimap');
+            minimapCtx = canvas.getContext('2d');
+
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            
+            const fogColor = 0x020205; 
+            scene.background = new THREE.Color(fogColor);
+            const fogDensity = CONFIG.weather === 'rain' ? 0.012 : 0.025;
+            scene.fog = new THREE.FogExp2(fogColor, fogDensity);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ReinhardToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0x445566, 0.8); 
+            scene.add(ambientLight);
+
+            const moonLight = new THREE.DirectionalLight(0xaaccff, 2); 
+            moonLight.position.set(-50, 100, -50);
+            moonLight.castShadow = true;
+            moonLight.shadow.mapSize.width = 2048;
+            moonLight.shadow.mapSize.height = 2048;
+            moonLight.shadow.camera.left = -100;
+            moonLight.shadow.camera.right = 100;
+            moonLight.shadow.camera.top = 100;
+            moonLight.shadow.camera.bottom = -100;
+            scene.add(moonLight);
+
+            createGround();
+            createForest();
+            createGhosts();
+            if (CONFIG.weather === 'rain') createRain();
+
+            // 🟢 变化：循环生成所有路标
+            const totalSigns = CONFIG.destinations.length;
+            CONFIG.destinations.forEach((dest, index) => {
+                // 将路标均匀分布在圆周上，并增加随机距离
+                const angleStep = (Math.PI * 2) / totalSigns;
+                const angle = index * angleStep + (Math.random() - 0.5) * 0.5; // 稍微随机一点角度
+                const dist = 60 + Math.random() * 80; // 距离中心 60-140 单位
+                
+                const x = Math.sin(angle) * dist;
+                const z = -Math.cos(angle) * dist;
+                
+                createSignPost(x, z, dest);
+            });
+
+            car = createCar();
+            scene.add(car);
+
+            window.addEventListener('resize', onWindowResize, false);
+            window.addEventListener('keydown', (e) => handleKey(e, true), false);
+            window.addEventListener('keyup', (e) => handleKey(e, false), false);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = Date.now() * 0.001;
+            
+            updatePhysics();
+            updateGhosts(time);
+            updateRain();
+            updateCamera();
+            checkInteraction();
+            updateMinimap();
+            
+            renderer.render(scene, camera);
+        }
+
+        // 🟢 核心重构：雷达式小地图
+        function updateMinimap() {
+            if (!minimapCtx || !car) return;
+            
+            // 清空画布
+            minimapCtx.clearRect(0, 0, canvasSize, canvasSize);
+
+            const originX = car.position.x;
+            const originZ = car.position.z;
+
+            // 1. 绘制路标 (绿色圆点)
+            // 逻辑：计算路标相对于车的坐标，然后缩放绘制
+            signPosts.forEach(signObj => {
+                const mesh = signObj.mesh;
+                
+                // 相对坐标
+                const relX = mesh.position.x - originX;
+                const relZ = mesh.position.z - originZ;
+
+                // 简单的坐标转换 (这里不旋转地图，只平移，保持“上北下南”的绝对方向感，不容易晕)
+                // 如果想要地图跟随车头旋转，需要在这里应用 2D 旋转矩阵
+                const screenX = centerOffset + relX * scale;
+                const screenY = centerOffset + relZ * scale;
+
+                // 检查是否在雷达显示范围内
+                const dist = Math.sqrt(relX*relX + relZ*relZ);
+                
+                if (dist < radarRadius) {
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(screenX, screenY, 3.5, 0, Math.PI * 2);
+                    minimapCtx.fillStyle = '#10b981'; // 绿点
+                    minimapCtx.fill();
+
+                    // 添加文字标签 (仅显示首字，避免拥挤)
+                    minimapCtx.fillStyle = '#a7f3d0';
+                    minimapCtx.font = '10px Arial';
+                    minimapCtx.textAlign = 'center';
+                    minimapCtx.fillText(signObj.data.text.substring(0,2), screenX, screenY - 6);
+                } else {
+                    // (可选) 如果在范围外，可以在边缘画一个指示箭头，这里为了简洁暂时省略
+                }
+            });
+
+            // 2. 绘制小车 (始终在中心)
+            minimapCtx.save();
+            minimapCtx.translate(centerOffset, centerOffset);
+            
+            // 因为地图是“上北下南”不动的，所以小车图标需要根据车身角度旋转
+            // ThreeJS 旋转 Y 轴对应 2D 画布的旋转
+            minimapCtx.rotate(-car.rotation.y); 
+
+            // 画车身
+            minimapCtx.fillStyle = '#ef4444'; // 亮红
+            minimapCtx.beginPath();
+            minimapCtx.moveTo(0, -5); // 车头
+            minimapCtx.lineTo(-4, 4);
+            minimapCtx.lineTo(0, 2);  // 凹陷尾部
+            minimapCtx.lineTo(4, 4);
+            minimapCtx.fill();
+
+            minimapCtx.restore();
+        }
+
+        function handleKey(e, isPressed) {
+            const key = e.key.toLowerCase();
+            if (input.hasOwnProperty(key)) input[key] = isPressed;
+            
+            // 🟢 交互逻辑：只跳转到 currentActiveSign
+            if (e.key === 'Enter' && isPressed && isCloseToSign && currentActiveSign) {
+                document.body.style.transition = 'opacity 1s';
+                document.body.style.opacity = '0';
+                setTimeout(() => window.location.href = currentActiveSign.url, 1000);
+            }
+        }
+
+        function updatePhysics() {
+            if (input.w) physics.speed += physics.acceleration;
+            if (input.s) physics.speed -= physics.acceleration;
+            physics.speed *= physics.friction;
+            if (Math.abs(physics.speed) < 0.001) physics.speed = 0;
+            
+            if (input.a) car.rotation.y += physics.turnSpeed;
+            if (input.d) car.rotation.y -= physics.turnSpeed;
+
+            car.translateZ(-physics.speed);
+            wheels.forEach(w => w.rotation.x += physics.speed * 2);
+            car.children[0].position.y = 0.8 + Math.sin(Date.now() * 0.02) * 0.01 * (Math.abs(physics.speed)*10);
+        }
+
+        function updateCamera() {
+            const offset = new THREE.Vector3(0, 8, 15);
+            offset.applyMatrix4(car.matrixWorld);
+            camera.position.lerp(offset, 0.1);
+            camera.lookAt(car.position.x, car.position.y + 1, car.position.z);
+        }
+
+        function updateGhosts(time) {
+            const carDir = new THREE.Vector3();
+            car.getWorldDirection(carDir); 
+            carDir.normalize();
+
+            ghosts.forEach(ghost => {
+                ghost.position.y = 1.8 + Math.sin(time * 2 + ghost.userData.offset) * 0.3;
+                ghost.lookAt(car.position);
+
+                if (scareCooldown > 0) return;
+
+                const dist = ghost.position.distanceTo(car.position);
+                if (dist < 3) { triggerScare(); return; }
+
+                if (dist < 35) {
+                    const dirToGhost = new THREE.Vector3().subVectors(ghost.position, car.position).normalize();
+                    const angle = carDir.dot(dirToGhost);
+                    if (angle > 0.9) triggerScare();
+                }
+            });
+
+            if (scareCooldown > 0) scareCooldown--;
+        }
+
+        function triggerScare() {
+            const overlay = document.getElementById('scare-overlay');
+            overlay.classList.add('scare-active');
+            camera.position.x += (Math.random() - 0.5) * 1;
+            camera.position.y += (Math.random() - 0.5) * 1;
+            setTimeout(() => { overlay.classList.remove('scare-active'); }, 100);
+            scareCooldown = 60;
+        }
+
+        // 🟢 变化：检查所有路标
+        function checkInteraction() {
+            if (signPosts.length === 0) return;
+
+            let closestDist = Infinity;
+            let closestSign = null;
+
+            // 寻找最近的路标
+            signPosts.forEach(obj => {
+                const dist = car.position.distanceTo(obj.mesh.position);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestSign = obj;
+                }
+            });
+
+            const ui = document.getElementById('interaction-ui');
+            const nameEl = document.getElementById('target-name');
+
+            if (closestDist < 10) {
+                if (!isCloseToSign || currentActiveSign !== closestSign.data) {
+                    isCloseToSign = true;
+                    currentActiveSign = closestSign.data;
+                    nameEl.innerText = closestSign.data.text; // 更新 UI 文本
+                    ui.classList.remove('opacity-0', 'translate-y-8');
+                    ui.classList.remove('pointer-events-none');
+                }
+            } else {
+                if (isCloseToSign) {
+                    isCloseToSign = false;
+                    currentActiveSign = null;
+                    ui.classList.add('opacity-0', 'translate-y-8');
+                    ui.classList.add('pointer-events-none');
+                }
+            }
+        }
+
+        function updateRain() {
+            if (!rainSystem) return;
+            const positions = rainSystem.geometry.attributes.position.array;
+            for(let i=1; i<positions.length; i+=3) {
+                positions[i] -= 0.6; 
+                if (positions[i] < 0) positions[i] = 60; 
+            }
+            rainSystem.geometry.attributes.position.needsUpdate = true;
+            rainSystem.position.x = car.position.x;
+            rainSystem.position.z = car.position.z;
+        }
+
+        function createRain() {
+            const geo = new THREE.BufferGeometry();
+            const count = 1500; 
+            const positions = [];
+            for(let i=0; i<count; i++) {
+                positions.push((Math.random()-0.5)*120); 
+                positions.push(Math.random()*60);         
+                positions.push((Math.random()-0.5)*120); 
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({ color: 0xaaaaaa, size: 0.25, transparent:true, opacity:0.6 });
+            rainSystem = new THREE.Points(geo, mat);
+            scene.add(rainSystem);
+        }
+
+        function createCar() {
+            const group = new THREE.Group();
+            
+            const bodyGeo = new THREE.BoxGeometry(2.2, 1, 4.5);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.2, metalness: 0.5 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.8;
+            body.castShadow = true;
+            group.add(body);
+
+            const glassGeo = new THREE.BoxGeometry(2, 0.8, 2.5);
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0, metalness: 0.8 });
+            const glass = new THREE.Mesh(glassGeo, glassMat);
+            glass.position.set(0, 1.6, -0.5);
+            glass.castShadow = true;
+            group.add(glass);
+
+            const wGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.4, 24);
+            const wMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+            const wheelPos = [[-1.2, 1.5], [1.2, 1.5], [-1.2, -1.5], [1.2, -1.5]];
+            wheelPos.forEach(p => {
+                const w = new THREE.Mesh(wGeo, wMat);
+                w.rotation.z = Math.PI / 2;
+                w.position.set(p[0], 0.4, p[1]);
+                w.castShadow = true;
+                wheels.push(w);
+                group.add(w);
+            });
+
+            const leftLight = new THREE.SpotLight(0xfffff0, 800);
+            leftLight.position.set(-0.8, 1, -1.8);
+            leftLight.target.position.set(-0.8, 0, -25);
+            leftLight.angle = 0.5;
+            leftLight.penumbra = 0.3;
+            leftLight.distance = 80;
+            leftLight.castShadow = true;
+            group.add(leftLight);
+            group.add(leftLight.target);
+
+            const rightLight = leftLight.clone();
+            rightLight.position.set(0.8, 1, -1.8);
+            rightLight.target.position.set(0.8, 0, -25);
+            group.add(rightLight);
+            group.add(rightLight.target);
+            
+            const tailLight = new THREE.PointLight(0xff0000, 10, 5);
+            tailLight.position.set(0, 1, 2.3);
+            group.add(tailLight);
+
+            return group;
+        }
+
+        function createGhosts() {
+            const geo = new THREE.CapsuleGeometry(0.5, 1.5, 4, 8);
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: 0xffffff, transparent: true, opacity: 0.3,
+                emissive: 0x88ccff, emissiveIntensity: 2, roughness: 0.1
+            });
+            for(let i=0; i<CONFIG.ghostCount; i++) {
+                const ghost = new THREE.Mesh(geo, mat);
+                let x, z;
+                do {
+                    x = (Math.random() - 0.5) * CONFIG.worldSize * 0.7;
+                    z = (Math.random() - 0.5) * CONFIG.worldSize * 0.7;
+                } while(Math.sqrt(x*x + z*z) < 30);
+                ghost.position.set(x, 2, z);
+                ghost.userData = { offset: Math.random() * 100 };
+                const eyeGeo = new THREE.SphereGeometry(0.12);
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+                leftEye.position.set(-0.2, 0.4, 0.45);
+                const rightEye = leftEye.clone();
+                rightEye.position.set(0.2, 0.4, 0.45);
+                ghost.add(leftEye); ghost.add(rightEye);
+                scene.add(ghost);
+                ghosts.push(ghost);
+            }
+        }
+
+        // 🟢 变化：生成路标并存入数组
+        function createSignPost(x, z, destinationData) {
+            const group = new THREE.Group();
+            
+            const pole = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.15, 0.15, 7),
+                new THREE.MeshStandardMaterial({ color: 0x222 })
+            );
+            pole.position.y = 3.5; pole.castShadow = true; group.add(pole);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#047857'; ctx.fillRect(0,0,512,256);
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 15; ctx.strokeRect(10,10,492,236);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 70px Arial';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            // 使用传入的文字
+            ctx.fillText(destinationData.text, 256, 128);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const board = new THREE.Mesh(
+                new THREE.BoxGeometry(4, 2, 0.2),
+                new THREE.MeshStandardMaterial({ map: texture, emissive: 0x047857, emissiveIntensity: 1.0 })
+            );
+            board.position.y = 6; group.add(board);
+
+            group.position.set(x, 0, z); group.lookAt(0,0,0);
+            scene.add(group);
+            
+            // 存入全局数组
+            signPosts.push({ mesh: group, data: destinationData });
+        }
+
+        function createGround() {
+            const geo = new THREE.PlaneGeometry(CONFIG.worldSize, CONFIG.worldSize, 64, 64);
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: 0x0a0a0a, roughness: CONFIG.weather === 'rain' ? 0.1 : 0.8, metalness: 0.2
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.rotation.x = -Math.PI / 2; mesh.receiveShadow = true;
+            scene.add(mesh);
+        }
+
+        function createForest() {
+            const trunkGeo = new THREE.CylinderGeometry(0.3, 0.5, 2, 5);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x1a1510 });
+            const leafGeo = new THREE.ConeGeometry(2.5, 6, 5);
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x0f1f25, roughness: 0.9 });
+            for(let i=0; i<150; i++) {
+                const group = new THREE.Group();
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = 1;
+                const leaf = new THREE.Mesh(leafGeo, leafMat);
+                leaf.position.y = 4;
+                trunk.castShadow = true; trunk.receiveShadow = true;
+                leaf.castShadow = true; leaf.receiveShadow = true;
+                group.add(trunk); group.add(leaf);
+                const r = 30 + Math.random() * (CONFIG.worldSize/2 - 30);
+                const a = Math.random() * Math.PI * 2;
+                group.position.set(Math.cos(a)*r, 0, Math.sin(a)*r);
+                group.scale.setScalar(0.8 + Math.random()*0.8);
+                scene.add(group);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+</body>
+</html>
