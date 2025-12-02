@@ -229,13 +229,13 @@ function MyTable() {
     {
       "startColumn": "ctrip",
       "colSpan": 3,
-      "title": "OTA渠道",
+      "title": "渠道",
       "align": "center"
     },
     {
       "startColumn": "official",
       "colSpan": 2,
-      "title": "直销渠道",
+      "title": "直销",
       "align": "center"
     }
   ],
