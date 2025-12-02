@@ -46,3 +46,4 @@
 53. web-weidget-lib -- 前端组件 lib
 54. FlexTable -- 支持固定列、行表格
 55. 404 -- 不一样的404页面
+56. MergeTable -- 基于antd实现可配置合并单元格的表格组件
