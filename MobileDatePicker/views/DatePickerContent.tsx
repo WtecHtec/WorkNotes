@@ -194,7 +194,7 @@ const DatePickerContent = ({ visible, start, end, type, onClose, isRange, onSele
           key={day}
           onClick={() => !disabled && handleDateSelect(date)}
           disabled={disabled}
-          className={`flex h-10 items-center justify-center rounded-lg text-sm transition-colors ${
+          className={`flex h-10 items-center justify-center rounded-lg text-sm transition-colors  ${disabled && "opacity-65"}  ${
             isRangeStart || isRangeEnd
               ? "bg-blue-500 font-medium text-white"
               : isInRange
@@ -293,7 +293,7 @@ const DatePickerContent = ({ visible, start, end, type, onClose, isRange, onSele
                         handleDateSelect(wr.monday);
                       }}
                       disabled={disabled}
-                      className={`flex h-10 items-center justify-center rounded-lg text-sm transition-colors ${
+                      className={`flex h-10 items-center justify-center rounded-lg text-sm transition-colors  ${disabled && "opacity-65"}  ${
                         isStart || isEnd
                           ? "bg-blue-500 font-medium text-white"
                           : inRange
@@ -339,7 +339,7 @@ const DatePickerContent = ({ visible, start, end, type, onClose, isRange, onSele
               key={index}
               onClick={() => !disabled && handleDateSelect(date)}
               disabled={disabled}
-              className={`flex h-14 items-center justify-center rounded-lg font-medium transition-colors ${
+              className={`flex h-14 items-center justify-center rounded-lg font-medium transition-colors  ${disabled && "opacity-65"}  ${
                 isRangeStart || isRangeEnd
                   ? "bg-blue-500 text-white"
                   : isInRange
@@ -392,7 +392,7 @@ const DatePickerContent = ({ visible, start, end, type, onClose, isRange, onSele
               key={quarter.value}
               onClick={() => !disabled && handleDateSelect(date)}
               disabled={disabled}
-              className={`w-full rounded-lg p-4 text-left transition-colors ${
+              className={`w-full rounded-lg p-4 text-left transition-colors  ${disabled && "opacity-65"}  ${
                 isRangeStart || isRangeEnd
                   ? "bg-blue-500 text-white"
                   : isInRange
@@ -442,7 +442,7 @@ const DatePickerContent = ({ visible, start, end, type, onClose, isRange, onSele
                 key={year}
                 disabled={disabled}
                 onClick={() => !disabled && handleDateSelect(date)}
-                className={`flex h-14 items-center justify-center rounded-lg font-medium transition-colors ${
+                className={`flex h-14 items-center justify-center rounded-lg font-medium transition-colors  ${disabled && "opacity-65"}  ${
                   isRangeStart || isRangeEnd
                     ? "bg-blue-500 text-white"
                     : isInRange
