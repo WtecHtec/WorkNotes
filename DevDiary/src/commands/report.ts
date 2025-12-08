@@ -69,7 +69,6 @@ export function registerReportCommand(program: Command) {
                     .replace('{{commits}}', commitsText);
 
                 spinner.start('Generating report with LLM...');
-                console.log(prompt)
                 const report = await llmService.generate(prompt, '你是一位能干的技术助理，负责生成每周报告. ');
                 spinner.succeed('Report generated!');
 

@@ -1,6 +1,6 @@
 {
   "name": "ugd",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Automated weekly reports and code reviews using Git history and LLMs",
   "main": "dist/index.js",
   "bin": {
@@ -17,6 +17,11 @@
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/bin/dd.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WtecHtec/WorkNotes.git"
+  },
+  "homepage": "https://github.com/WtecHtec/WorkNotes/tree/master/DevDiary",
   "keywords": [
     "git",
     "report",
