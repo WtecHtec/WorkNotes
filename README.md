@@ -49,3 +49,4 @@
 56. MergeTable -- [基于antd实现可配置合并单元格的表格组件](./MergeTable)
 57. MobileDatePicker -- [移动端日期组件（支持日、月、周、季度、年）](./MobileDatePicker)
 58. DevDiary -- [根据git提交记录生成周报](./DevDiary/)
+59. HeatMap -- [热力图组件](./HeatMap)
