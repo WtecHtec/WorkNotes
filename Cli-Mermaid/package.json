@@ -1,0 +1,23 @@
+{
+  "name": "mermaid-unicode",
+  "version": "0.1.0",
+  "description": "在 Node CLI 与浏览器中将 Mermaid 子集渲染为 Unicode 字符图",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.js",
+    "./node": "./src/adapters/node/ansi-renderer.js",
+    "./web": "./src/adapters/web/html-renderer.js"
+  },
+  "bin": {
+    "mermaid-unicode": "./src/adapters/node/cli.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "example": "node examples/render.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "Apache-2.0"
+}

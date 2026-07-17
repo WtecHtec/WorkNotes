@@ -1,0 +1,11 @@
+mermaid-unicode
+Copyright 2026 mermaid-unicode contributors
+
+This product includes a JavaScript adaptation of ideas and algorithms from:
+
+  grok-build / xai-grok-markdown / mermaid.rs
+  Copyright xAI
+  https://github.com/xai-org/grok-build/blob/b189869b7755d2b482969acf6c92da3ecfeffd36/crates/codegen/xai-grok-markdown/src/mermaid.rs
+
+The upstream work is licensed under the Apache License, Version 2.0.
+This product is also distributed under the Apache License, Version 2.0.

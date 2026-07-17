@@ -51,3 +51,4 @@
 58. DevDiary -- [根据git提交记录生成周报](./DevDiary/)
 59. HeatMap -- [热力图组件](./HeatMap)
 60. 油猴本 -- [油猴本合集](./油猴本)
+61. cliMermaid -- [cli 转换mermaid图表为图片工具](./Cli-Mermaid)

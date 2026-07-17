@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>mermaid-unicode Web 示例</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        color: #e5e7eb;
+        background: #0f172a;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="diagram"></main>
+    <script type="module">
+      import {
+        defaultMermaidUnicodeCss,
+        renderHtml,
+        renderMermaid,
+      } from "../src/index.js"
+
+      const source = `
+flowchart LR
+  Browser[浏览器] --> Core{领域核心}
+  Core --> Html[安全 HTML]
+  Core --> Text[纯文本]
+`
+      const style = document.createElement("style")
+      style.textContent = defaultMermaidUnicodeCss
+      document.head.append(style)
+
+      const art = renderMermaid(source, { maxWidth: 100 })
+      document.querySelector("#diagram").innerHTML = renderHtml(art, {
+        ariaLabel: "Node 与 Web 共用 Mermaid Unicode 核心",
+      })
+    </script>
+  </body>
+</html>
