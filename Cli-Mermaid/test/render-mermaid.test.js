@@ -7,7 +7,7 @@ import {
   renderAnsi,
   renderHtml,
   renderMermaid,
-} from "../src/index.js"
+} from "../dist/index.js"
 
 function textOf(source, options) {
   const art = renderMermaid(source, options)
@@ -179,7 +179,7 @@ describe("容错和资源边界", () => {
   })
 
   it("CLI 可从 stdin 输出纯文本", () => {
-    const result = spawnSync(process.execPath, ["src/adapters/node/cli.js", "--no-color", "--width", "80"], {
+    const result = spawnSync(process.execPath, ["dist/cli.js", "--no-color", "--width", "80"], {
       cwd: process.cwd(),
       input: "flowchart TD\nA[Start] --> B[End]",
       encoding: "utf8",

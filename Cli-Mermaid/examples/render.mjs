@@ -1,4 +1,4 @@
-import { renderAnsi, renderMermaid } from "../src/index.js"
+import { renderAnsi, renderMermaid } from "../dist/index.js"
 
 const source = `
 flowchart TD
