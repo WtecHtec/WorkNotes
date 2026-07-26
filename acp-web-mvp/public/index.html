@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ACP Web MVP</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4d;
+      --text: #e7ecf3;
+      --muted: #8b9bb4;
+      --accent: #5b9fd4;
+      --user: #243044;
+      --agent: #1c2b24;
+      --danger: #e06c75;
+      --ok: #7fd99a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      background: var(--panel);
+    }
+    header h1 {
+      font-size: 16px;
+      margin: 0 12px 0 0;
+      font-weight: 600;
+    }
+    label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+    select, input[type="text"] {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      min-width: 160px;
+    }
+    input#cwd { min-width: 280px; }
+    button {
+      background: var(--accent);
+      color: #041018;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    #status {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 420px;
+      text-align: right;
+    }
+    #status.ok { color: var(--ok); }
+    #status.err { color: var(--danger); }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px;
+      gap: 12px;
+    }
+    #log {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #0c1016;
+      padding: 12px;
+      min-height: 360px;
+    }
+    .msg {
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+    .msg.user { background: var(--user); border: 1px solid var(--border); }
+    .msg.agent { background: var(--agent); border: 1px solid #2a4034; }
+    .msg.system { background: transparent; color: var(--muted); font-size: 12px; border: 1px dashed var(--border); }
+    .msg .role { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; }
+    .msg .meta { color: var(--muted); font-size: 12px; }
+    .composer {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .composer textarea {
+      flex: 1;
+      min-height: 72px;
+      resize: vertical;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ACP Web MVP</h1>
+    <label>
+      Agent
+      <select id="agentType"></select>
+    </label>
+    <label>
+      工作目录 (cwd)
+      <input id="cwd" type="text" placeholder="留空则使用服务端 process.cwd()" />
+    </label>
+    <button id="btnCreate" type="button">新建会话</button>
+    <button id="btnEnd" class="secondary" type="button" disabled>结束会话</button>
+    <div id="status">暂无会话</div>
+  </header>
+  <main>
+    <div id="log" aria-live="polite"></div>
+    <form class="composer" id="form">
+      <textarea id="input" placeholder="输入消息…（Enter 发送，Shift+Enter 换行）" disabled></textarea>
+      <button id="btnSend" type="submit" disabled>发送</button>
+    </form>
+  </main>
+  <script>
+    /**
+     * 极简前端控制器。
+     * 只请求本机 Node API（HTTP/SSE），不直接接触 ACP。
+     */
+    const el = {
+      agentType: document.getElementById('agentType'),
+      cwd: document.getElementById('cwd'),
+      btnCreate: document.getElementById('btnCreate'),
+      btnEnd: document.getElementById('btnEnd'),
+      btnSend: document.getElementById('btnSend'),
+      status: document.getElementById('status'),
+      log: document.getElementById('log'),
+      form: document.getElementById('form'),
+      input: document.getElementById('input'),
+    };
+
+    /** @type {string | null} 当前 Web 会话 id */
+    let sessionId = null;
+    /** 是否正在发送/接收一轮回复 */
+    let sending = false;
+
+    /**
+     * 更新顶栏状态文案。
+     * @param {string} text
+     * @param {'ok'|'err'|''} [kind]
+     */
+    function setStatus(text, kind = '') {
+      el.status.textContent = text;
+      el.status.className = kind;
+    }
+
+    /**
+     * 追加一条完整消息气泡。
+     * @param {'user'|'agent'|'system'} role
+     * @param {string} text
+     */
+    function appendMessage(role, text) {
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      const roleSpan = document.createElement('span');
+      roleSpan.className = 'role';
+      const roleLabel = { user: '用户', agent: 'Agent', system: '系统' }[role] || role;
+      roleSpan.textContent = roleLabel;
+      div.appendChild(roleSpan);
+      div.appendChild(document.createTextNode(text));
+      el.log.appendChild(div);
+      el.log.scrollTop = el.log.scrollHeight;
+      return div;
+    }
+
+    /**
+     * 创建可边收 SSE 边改写的 Agent 气泡。
+     * @returns {{ root: HTMLElement, setText: (t: string) => void, addMeta: (t: string) => void }}
+     */
+    function beginAgentBubble() {
+      const root = document.createElement('div');
+      root.className = 'msg agent';
+      const roleSpan = document.createElement('span');
+      roleSpan.className = 'role';
+      roleSpan.textContent = 'Agent';
+      const body = document.createElement('div');
+      body.className = 'body';
+      body.textContent = '';
+      root.appendChild(roleSpan);
+      root.appendChild(body);
+      el.log.appendChild(root);
+      el.log.scrollTop = el.log.scrollHeight;
+      return {
+        root,
+        setText(t) {
+          body.textContent = t;
+          el.log.scrollTop = el.log.scrollHeight;
+        },
+        addMeta(t) {
+          const m = document.createElement('div');
+          m.className = 'meta';
+          m.textContent = t;
+          root.insertBefore(m, body);
+        },
+      };
+    }
+
+    /**
+     * 按是否已有会话 / 是否发送中，切换控件可用状态。
+     * @param {boolean} active 是否存在有效会话
+     */
+    function setSessionUi(active) {
+      el.input.disabled = !active || sending;
+      el.btnSend.disabled = !active || sending;
+      el.btnEnd.disabled = !active;
+      el.btnCreate.disabled = active || sending;
+      el.agentType.disabled = active;
+    }
+
+    /** 拉取可选 Agent 列表并填充下拉框。 */
+    async function loadAgents() {
+      const res = await fetch('/api/agents');
+      const data = await res.json();
+      el.agentType.innerHTML = '';
+      for (const a of data.agents || []) {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.label;
+        el.agentType.appendChild(opt);
+      }
+    }
+
+    /** 创建新会话（服务端 spawn Agent）。 */
+    async function createSession() {
+      setStatus('正在启动 Agent…');
+      el.btnCreate.disabled = true;
+      try {
+        const res = await fetch('/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agentType: el.agentType.value,
+            cwd: el.cwd.value.trim() || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        sessionId = data.session.id;
+        setSessionUi(true);
+        setStatus(`会话 ${sessionId.slice(0, 8)}… · ${data.session.agentType} · ${data.session.cwd}`, 'ok');
+        appendMessage(
+          'system',
+          `已连接 · agent=${data.session.agentType}\ncwd=${data.session.cwd}\nacpSession=${data.session.acpSessionId}`,
+        );
+        el.input.focus();
+      } catch (err) {
+        setStatus(err.message || String(err), 'err');
+        appendMessage('system', `创建会话失败：${err.message || err}`);
+        el.btnCreate.disabled = false;
+      }
+    }
+
+    /** 结束当前会话并杀掉 Agent 进程。 */
+    async function endSession() {
+      if (!sessionId) return;
+      const id = sessionId;
+      sessionId = null;
+      setSessionUi(false);
+      try {
+        await fetch(`/api/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      } catch {
+        /* 忽略网络错误 */
+      }
+      setStatus('暂无会话');
+      appendMessage('system', '会话已结束');
+    }
+
+    /**
+     * 发送消息并消费 SSE，直到 done/error。
+     * @param {string} text
+     */
+    async function sendMessage(text) {
+      if (!sessionId || sending) return;
+      sending = true;
+      setSessionUi(true);
+      appendMessage('user', text);
+      el.input.value = '';
+      const bubble = beginAgentBubble();
+      let full = '';
+
+      try {
+        const res = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        if (!res.ok || !res.body) {
+          const errText = await res.text();
+          throw new Error(errText || `HTTP ${res.status}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // SSE 帧以空行分隔
+          let idx;
+          while ((idx = buffer.indexOf('\n\n')) >= 0) {
+            const frame = buffer.slice(0, idx);
+            buffer = buffer.slice(idx + 2);
+            const lines = frame.split('\n');
+            let event = 'message';
+            let dataLine = '';
+            for (const line of lines) {
+              if (line.startsWith('event:')) event = line.slice(6).trim();
+              if (line.startsWith('data:')) dataLine += line.slice(5).trim();
+            }
+            if (!dataLine) continue;
+            let payload;
+            try {
+              payload = JSON.parse(dataLine);
+            } catch {
+              continue;
+            }
+
+            if (event === 'text' && payload.text) {
+              full += payload.text;
+              bubble.setText(full);
+            } else if (event === 'thinking' && payload.text) {
+              // 思考内容只作旁注，不覆盖正文
+              bubble.addMeta(`思考：${payload.text.slice(0, 200)}`);
+            } else if (event === 'tool_start') {
+              bubble.addMeta(`工具 ▸ ${payload.toolName || 'tool'}`);
+            } else if (event === 'tool_complete') {
+              bubble.addMeta(`工具 ✓ ${payload.toolName || 'tool'}`);
+            } else if (event === 'error') {
+              bubble.addMeta(`错误：${payload.text || 'unknown'}`);
+              if (!full) bubble.setText(payload.text || 'error');
+            } else if (event === 'done') {
+              if (!full && payload.text) {
+                full = payload.text;
+                bubble.setText(full);
+              }
+              if (!full) bubble.setText('（空回复）');
+            } else if (event === 'status' && payload.text) {
+              bubble.addMeta(payload.text);
+            }
+          }
+        }
+      } catch (err) {
+        bubble.setText(full || `错误：${err.message || err}`);
+        setStatus(err.message || String(err), 'err');
+      } finally {
+        sending = false;
+        setSessionUi(!!sessionId);
+        el.input.focus();
+      }
+    }
+
+    el.btnCreate.addEventListener('click', () => createSession());
+    el.btnEnd.addEventListener('click', () => endSession());
+    el.form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = el.input.value.trim();
+      if (text) sendMessage(text);
+    });
+    el.input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        el.form.requestSubmit();
+      }
+    });
+
+    loadAgents().catch((err) => setStatus(String(err), 'err'));
+  </script>
+</body>
+</html>

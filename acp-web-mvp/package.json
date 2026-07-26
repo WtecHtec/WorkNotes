@@ -1,0 +1,14 @@
+{
+  "name": "acp-web-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal Node + static HTML MVP that chats with Claude/Codex via ACP",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
