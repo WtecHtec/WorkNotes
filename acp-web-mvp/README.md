@@ -1,5 +1,7 @@
 # ACP Web MVP
 
+![image](./public/75e9bcaf-8720-4415-aba3-65d8b0a46784.png)
+
 用 **Node.js + 静态 HTML** 做的最小对话台：通过 **ACP** 连接本机 **Claude** / **Codex**。
 
 ```text
@@ -9,6 +11,8 @@
                            |
                  claude-agent-acp / codex-acp
 ```
+
+
 
 有意做小：没有 agents-chat 的登录、多 Agent 编排、SQLite、Relay。
 
@@ -79,8 +83,8 @@ SSE 事件名：`status`、`thinking`、`text`、`tool_start`、`tool_complete`�
 - **一个浏览器会话 = 一个 Agent 操作系统进程**。结束会话会 kill 进程。
 - 新建会话后第一条消息可能较慢（`npx` 拉包）。
 
-## 与 agents-chat 的关系
 
-思路相同：Node 做 ACP **Client**，适配器做 ACP **Agent**。
 
-差异：无 Next/SQLite/登录；手写 NDJSON；SSE 代替 poll；静态 HTML。
+Node 做 ACP **Client**，适配器做 ACP **Agent**。
+
+
