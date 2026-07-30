@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>MCP Map App</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --accent: #2563eb;
+    --accent-bg: #eff6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "PingFang SC", sans-serif;
+    color: var(--ink);
+    background: transparent;
+  }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .map {
+    position: relative;
+    height: 220px;
+    background:
+      linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 28px 28px,
+      linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 28px 28px,
+      #fafafa;
+  }
+  .marker {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+  }
+  .marker .pin {
+    width: 16px; height: 16px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--accent);
+    transform: rotate(-45deg);
+    box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  .marker .label {
+    margin-top: 4px;
+    font-size: 11px;
+    background: white;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .panel {
+    padding: 12px 14px;
+    border-top: 1px solid var(--line);
+  }
+  .panel h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+  }
+  .panel p {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  button {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    background: var(--accent-bg);
+    color: var(--accent);
+    cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  .directions {
+    margin-top: 10px;
+    font-size: 12px;
+    padding-left: 18px;
+    color: var(--ink);
+  }
+  .empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="map" id="map">
+      <div class="empty">等待宿主发送地点数据…</div>
+    </div>
+    <div class="panel" id="panel" style="display:none">
+      <h3 id="place-name"></h3>
+      <p id="place-coords"></p>
+      <button id="directions-btn">获取路线(调用 get_directions 工具)</button>
+      <ol class="directions" id="directions" style="display:none"></ol>
+    </div>
+  </div>
+
+<script>
+  // ------------------------------------------------------------------
+  // MCP Apps 的 postMessage 协议(本 demo 用的是简化版本,核心思路一致):
+  //
+  //   UI  --> 宿主 :  { type: "mcp-app:ready" }
+  //   宿主 --> UI  :  { type: "mcp-app:render", data: <tool 的 structuredContent> }
+  //   UI  --> 宿主 :  { type: "mcp-app:call-tool", requestId, tool, arguments }
+  //   宿主 --> UI  :  { type: "mcp-app:tool-result", requestId, result }
+  //
+  // 真实实现里建议直接用官方 SDK(@modelcontextprotocol/ext-apps)的 App 类,
+  // 它把这套 postMessage 协议封装成了标准 JSON-RPC 调用,这里手写是为了把
+  // "线上到底传了什么"这件事讲清楚。
+  // ------------------------------------------------------------------
+
+  const mapEl = document.getElementById("map");
+  const panelEl = document.getElementById("panel");
+  const nameEl = document.getElementById("place-name");
+  const coordsEl = document.getElementById("place-coords");
+  const btnEl = document.getElementById("directions-btn");
+  const dirEl = document.getElementById("directions");
+
+  let currentMarker = null;
+  let pendingRequestId = null;
+
+  function project(lat, lng, center) {
+    // 极简的"假投影":以 center 为中心,把经纬度差值线性映射到像素坐标
+    const scale = 4000;
+    const x = 50 + (lng - center.lng) * scale;
+    const y = 50 - (lat - center.lat) * scale;
+    return { x: Math.max(4, Math.min(96, x)), y: Math.max(10, Math.min(90, y)) };
+  }
+
+  function render(data) {
+    const { center, markers } = data;
+    mapEl.innerHTML = "";
+    (markers || []).forEach((m) => {
+      const pos = project(m.lat, m.lng, center);
+      const el = document.createElement("div");
+      el.className = "marker";
+      el.style.left = pos.x + "%";
+      el.style.top = pos.y + "%";
+      el.innerHTML = `<div class="pin"></div><div class="label">${m.label}</div>`;
+      el.addEventListener("click", () => selectMarker(m));
+      mapEl.appendChild(el);
+    });
+    if (markers && markers[0]) selectMarker(markers[0]);
+  }
+
+  function selectMarker(m) {
+    currentMarker = m;
+    panelEl.style.display = "block";
+    nameEl.textContent = m.label;
+    coordsEl.textContent = `lat ${m.lat.toFixed(4)}, lng ${m.lng.toFixed(4)}`;
+    dirEl.style.display = "none";
+    dirEl.innerHTML = "";
+    btnEl.disabled = false;
+    btnEl.textContent = "获取路线(调用 get_directions 工具)";
+  }
+
+  btnEl.addEventListener("click", () => {
+    if (!currentMarker) return;
+    btnEl.disabled = true;
+    btnEl.textContent = "正在向宿主请求调用 get_directions …";
+    pendingRequestId = "req_" + Math.random().toString(36).slice(2);
+    // 关键一步:UI 不直接访问任何后端,而是让宿主代为调用 MCP 工具
+    window.parent.postMessage(
+      {
+        type: "mcp-app:call-tool",
+        requestId: pendingRequestId,
+        tool: "get_directions",
+        arguments: { destination: currentMarker.label },
+      },
+      "*"
+    );
+  });
+
+  window.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (!msg || typeof msg !== "object") return;
+
+    if (msg.type === "mcp-app:render") {
+      render(msg.data);
+    }
+
+    if (msg.type === "mcp-app:tool-result" && msg.requestId === pendingRequestId) {
+      const steps = msg.result?.steps || [];
+      dirEl.innerHTML = steps.map((s) => `<li>${s}</li>`).join("");
+      dirEl.style.display = "block";
+      btnEl.disabled = false;
+      btnEl.textContent = "重新获取路线";
+    }
+  });
+
+  // 告诉宿主:UI 已经加载完毕,可以推数据过来了
+  window.parent.postMessage({ type: "mcp-app:ready" }, "*");
+</script>
+</body>
+</html>

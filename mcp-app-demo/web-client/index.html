@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MCP Apps 本地 Demo</title>
+<style>
+  :root {
+    --ink: #1f2430; --muted: #6b7280; --line: #e5e7eb;
+    --accent: #2563eb; --bg: #f7f8fa; --bubble: #fff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "PingFang SC", sans-serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 120px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .msg { margin-bottom: 16px; display: flex; }
+  .msg.user { justify-content: flex-end; }
+  .bubble {
+    max-width: 80%; padding: 10px 14px; border-radius: 12px;
+    background: var(--bubble); border: 1px solid var(--line);
+    font-size: 14px; line-height: 1.6; white-space: pre-wrap;
+  }
+  .msg.user .bubble { background: var(--accent); color: white; border-color: var(--accent); }
+  .tag {
+    display: inline-block; font-size: 11px; color: var(--accent);
+    background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;
+    padding: 1px 6px; margin: 6px 0; font-family: ui-monospace, monospace;
+  }
+  .app-frame-wrap {
+    border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+    margin: 8px 0; background: white;
+  }
+  .app-frame-wrap iframe {
+    width: 100%; border: 0; display: block; height: 340px;
+  }
+  .composer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 1px solid var(--line);
+    padding: 12px 16px; display: flex; justify-content: center;
+  }
+  .composer form { width: 100%; max-width: 760px; display: flex; gap: 8px; }
+  .composer input {
+    flex: 1; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--line); font-size: 14px;
+  }
+  .composer button {
+    padding: 10px 16px; border-radius: 10px; border: none;
+    background: var(--accent); color: white; font-size: 14px; cursor: pointer;
+  }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>MCP Apps 本地 Demo</h1>
+    <div class="sub">
+      map-mcp-server（MCP 服务） · mock-llm-server（假 LLM，流式） · orchestrator（MCP client + web 后端） · 你现在看到的这个页面（web client）
+    </div>
+    <div id="chat"></div>
+    <div class="hint">试试输入:「带我看看东京塔」/「浅草寺怎么走」/「涩谷十字路口」</div>
+  </div>
+
+  <div class="composer">
+    <form id="form">
+      <input id="input" autocomplete="off" placeholder="跟这个假 LLM 说点什么…" />
+      <button type="submit">发送</button>
+    </form>
+  </div>
+
+<script>
+  const chatEl = document.getElementById("chat");
+  const formEl = document.getElementById("form");
+  const inputEl = document.getElementById("input");
+
+  function addUserMessage(text) {
+    const div = document.createElement("div");
+    div.className = "msg user";
+    div.innerHTML = `<div class="bubble"></div>`;
+    div.querySelector(".bubble").textContent = text;
+    chatEl.appendChild(div);
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+
+  function addAssistantContainer() {
+    const div = document.createElement("div");
+    div.className = "msg assistant";
+    div.innerHTML = `<div class="bubble"></div>`;
+    chatEl.appendChild(div);
+    return div.querySelector(".bubble");
+  }
+
+  // 渲染一个 MCP App:建 sandboxed iframe,装入服务器返回的 HTML,
+  // 并把 initialData 通过 postMessage 喂进去;之后转发 iframe 发来的工具调用请求。
+  function renderMcpApp(bubbleEl, { html, initialData }) {
+    const wrap = document.createElement("div");
+    wrap.className = "app-frame-wrap";
+    const iframe = document.createElement("iframe");
+    // sandbox: 只允许跑脚本和给同源以外的 postMessage,不允许跳转顶层、不允许同源访问宿主 DOM
+    iframe.setAttribute("sandbox", "allow-scripts");
+    iframe.srcdoc = html;
+    wrap.appendChild(iframe);
+    bubbleEl.parentElement.insertBefore(wrap, bubbleEl);
+
+    let ready = false;
+    let queuedData = initialData;
+
+    function handleMessage(event) {
+      if (event.source !== iframe.contentWindow) return;
+      const msg = event.data;
+      if (!msg || typeof msg !== "object") return;
+
+      if (msg.type === "mcp-app:ready") {
+        ready = true;
+        if (queuedData) {
+          iframe.contentWindow.postMessage({ type: "mcp-app:render", data: queuedData }, "*");
+        }
+      }
+
+      if (msg.type === "mcp-app:call-tool") {
+        // UI 想反向调用一个 MCP 工具 —— 转发给 orchestrator 的 /api/ui-event
+        fetch("/api/ui-event", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ tool: msg.tool, arguments: msg.arguments }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            iframe.contentWindow.postMessage(
+              {
+                type: "mcp-app:tool-result",
+                requestId: msg.requestId,
+                result: data.result,
+              },
+              "*"
+            );
+          });
+      }
+    }
+
+    window.addEventListener("message", handleMessage);
+  }
+
+  async function send(message) {
+    addUserMessage(message);
+    let bubble = addAssistantContainer();
+    let textBuf = "";
+
+    const resp = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, idx).trim();
+        buf = buf.slice(idx + 1);
+        if (!line) continue;
+        const evt = JSON.parse(line);
+
+        if (evt.type === "text") {
+          textBuf += evt.text;
+          bubble.textContent = textBuf;
+        } else if (evt.type === "tool_call") {
+          const tag = document.createElement("div");
+          tag.className = "tag";
+          tag.textContent = `🔧 调用工具 ${evt.name}(${JSON.stringify(evt.arguments)})`;
+          bubble.parentElement.appendChild(tag);
+          // 后面还会继续追加文本,重开一个新气泡,视觉上更像"多段回复"
+          bubble = addAssistantContainer();
+          textBuf = "";
+        } else if (evt.type === "ui_resource") {
+          renderMcpApp(bubble, { html: evt.html, initialData: evt.initialData });
+          bubble = addAssistantContainer();
+          textBuf = "";
+        } else if (evt.type === "error") {
+          bubble.textContent = "出错了: " + evt.message;
+        }
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+    }
+  }
+
+  formEl.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = inputEl.value.trim();
+    if (!v) return;
+    inputEl.value = "";
+    send(v);
+  });
+</script>
+</body>
+</html>

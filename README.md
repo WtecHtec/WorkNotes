@@ -53,3 +53,4 @@
 60. 油猴本 -- [油猴本合集](./油猴本)
 61. cliMermaid -- [cli 转换mermaid图表为图片工具](./Cli-Mermaid)
 62. acp-web-mvp -- [一个简单ACP的网页版的对话工具](./acp-web-mvp)
+63. mcp-app-demo -- [mcp显示ui demo](./mcp-app-demo/)
