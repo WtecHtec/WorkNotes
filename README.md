@@ -55,3 +55,4 @@
 62. acp-web-mvp -- [一个简单ACP的网页版的对话工具](./acp-web-mvp)
 63. mcp-app-demo -- [mcp显示ui demo](./mcp-app-demo/)
 64. prime-agent-mvp -- [prime-agent 最小执行](./prime-agent-mvp)
+65. capnweb-gadget-mvp -- [capnweb 最小执行](./capnweb-gadget-mvp)
