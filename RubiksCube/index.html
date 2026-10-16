@@ -1,0 +1,2517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D 魔方（虚拟 + 蓝牙同步）</title>
+  <style>
+    :root {
+      --bg: #07090e;
+      --panel: rgba(16, 21, 30, 0.74);
+      --panel-border: rgba(255, 255, 255, 0.09);
+      --card: rgba(255, 255, 255, 0.035);
+      --fg: #f1f5f9;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --gold: #fbbf24;
+      --ok: #34d399;
+      --err: #f87171;
+      --muted: #8b9bb4;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    html,
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 42%, #1a2436 0%, #0a0e17 58%, #04060a 100%);
+      color: var(--fg);
+      font: 14px/1.6 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    /* 3D 渲染画布（修复原版缺失 canvas 元素与宽高问题） */
+    #cv {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+      outline: none;
+      cursor: grab;
+    }
+
+    #cv:active {
+      cursor: grabbing;
+    }
+
+    /* 电影级暗角与环境氛围光晕 */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      background:
+        radial-gradient(circle at 50% 15%, rgba(56, 189, 248, 0.07) 0%, transparent 45%),
+        radial-gradient(circle at center, transparent 52%, rgba(2, 4, 9, 0.75) 100%);
+    }
+
+    /* ===== 左上模式提示与快捷操作栏 ===== */
+    #modeTag {
+      position: fixed;
+      left: 20px;
+      top: 20px;
+      z-index: 5;
+      color: var(--muted);
+      font-size: 13px;
+      background: var(--panel);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--panel-border);
+      padding: 10px 16px;
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: calc(100vw - 460px);
+    }
+
+    #modeTag b {
+      color: var(--fg);
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .quick-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 6px;
+      padding-left: 10px;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .quick-btn {
+      margin: 0;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+    /* ===== 左下 HUD ===== */
+    #hud {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      z-index: 5;
+      background: var(--panel);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 12px 20px;
+      font-size: 13px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    #hud .big {
+      font: 700 22px/1 "JetBrains Mono", Consolas, monospace;
+      color: var(--gold);
+      text-shadow: 0 0 14px rgba(251, 191, 36, 0.45);
+      vertical-align: -2px;
+      margin-left: 4px;
+    }
+
+    /* ===== 设置抽屉（默认收起） ===== */
+    #drawer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 400px;
+      max-width: calc(100vw - 40px);
+      max-height: calc(100vh - 40px);
+      background: var(--panel);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    #drawer header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 18px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px 16px 0 0;
+      transition: background 0.2s;
+    }
+
+    #drawer.closed header {
+      border-bottom: none;
+      border-radius: 16px;
+    }
+
+    #drawer header:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    #drawer header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--fg);
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #drawer header h1::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    #drawerBody {
+      padding: 14px 16px 16px;
+      overflow-y: auto;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    /* 允许设置面板与调试内容支持随意框选与复制 */
+    #drawerBody,
+    #drawerBody *,
+    .panel,
+    .panel *,
+    #moves,
+    #moves *,
+    #dump,
+    #cubeinfo,
+    #cubeinfo2,
+    .modal-box,
+    .modal-box * {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    /* 按钮与复选框保持不可框选，提升操作触控感 */
+    button,
+    button *,
+    input[type="checkbox"],
+    #drawerHead,
+    #drawerHead * {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #drawerBody::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    #drawerBody::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+
+    #drawer.closed #drawerBody {
+      display: none;
+    }
+
+    button {
+      background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      margin: 3px 6px 3px 0;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: all 0.2s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      filter: brightness(1.08);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    button.ghost {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--fg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: none;
+    }
+
+    button.ghost:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+
+    .panel:last-child {
+      margin-bottom: 0;
+    }
+
+    .panel h2 {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+
+    #status {
+      font-weight: 600;
+      font-size: 12px;
+      padding: 2px 9px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    #status.ok {
+      color: var(--ok);
+      background: rgba(52, 211, 153, 0.12);
+      border-color: rgba(52, 211, 153, 0.3);
+    }
+
+    #status.err {
+      color: var(--err);
+      background: rgba(248, 113, 113, 0.12);
+      border-color: rgba(248, 113, 113, 0.3);
+    }
+
+    #dump {
+      font: 11px/1.55 "JetBrains Mono", Consolas, monospace;
+      color: #93c5fd;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin: 6px 0;
+      max-height: 180px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      cursor: text;
+    }
+
+    #moves {
+      font: 600 16px/1.6 "JetBrains Mono", Consolas, monospace;
+      color: var(--gold);
+      min-height: 30px;
+      word-break: break-all;
+      padding: 4px 0;
+      cursor: text;
+    }
+
+    .mv {
+      display: inline-block;
+      margin-right: 6px;
+      margin-bottom: 4px;
+      padding: 1px 7px;
+      border-radius: 5px;
+      background: rgba(251, 191, 36, 0.12);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+    }
+
+    .mv:last-child {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.35), rgba(2, 132, 199, 0.35));
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    label.chk {
+      color: var(--muted);
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    p.hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* 顶部非模态通知提示框 */
+    #toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: rgba(22, 28, 40, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(248, 113, 113, 0.4);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      z-index: 100;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      pointer-events: none;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 蓝牙权限策略提示条 (file:// 或非安全上下文) */
+    #permBanner {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99;
+      background: rgba(30, 20, 10, 0.92);
+      border: 1px solid rgba(251, 191, 36, 0.5);
+      color: #fef08a;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      animation: fadeInDown 0.3s ease;
+      max-width: 90vw;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    #permBanner code {
+      background: rgba(0, 0, 0, 0.35);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: #fff;
+      font-family: Consolas, monospace;
+    }
+
+    /* 权限帮助弹窗 Modal */
+    #permModalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #permModalOverlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #0d121c;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 18px;
+      max-width: 620px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+      color: var(--fg);
+      position: relative;
+    }
+
+    .modal-box h2 {
+      font-size: 17px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .modal-section {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
+    .modal-section h3 {
+      font-size: 14px;
+      color: var(--accent);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-section p {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    .cmd-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      color: #93c5fd;
+      margin-top: 8px;
+      user-select: text;
+    }
+
+    .cmd-line code {
+      flex: 1;
+      word-break: break-all;
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+    }
+
+    .modal-close-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    @media (max-width: 860px) {
+      #modeTag {
+        max-width: calc(100vw - 40px);
+        top: 76px;
+      }
+
+      #drawer {
+        top: 14px;
+        right: 14px;
+        left: 14px;
+        width: auto;
+      }
+
+      #permBanner {
+        font-size: 12px;
+        padding: 6px 12px;
+        width: calc(100vw - 40px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 核心修复：补齐原代码缺失的 <canvas id="cv"> 画布节点 -->
+  <canvas id="cv"></canvas>
+  <div class="vignette"></div>
+  <div id="toast"></div>
+
+  <!-- 蓝牙权限策略限制提示条 (在 file:// 或非授权 iframe 时显示) -->
+  <div id="permBanner" style="display:none;">
+    <span>⚠️ <b>蓝牙受限提示</b>：当前以 <code>file://</code> 打开。现代浏览器因安全策略限制本地文件使用蓝牙，请在 <code>http://localhost</code> 打开。</span>
+    <button id="btnOpenPermModal" class="quick-btn" style="margin:0;white-space:nowrap">查看一键修复指南 ➜</button>
+  </div>
+
+  <!-- 蓝牙权限解决指南弹窗 -->
+  <div id="permModalOverlay">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="btnClosePermModal">&times;</button>
+      <h2>🛡️ 蓝牙连接权限解决指南</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
+        报错 <code>Access to the feature "bluetooth" is disallowed by permissions policy</code> 是现代 Chrome / Edge
+        浏览器的核心安全限制（Permissions Policy），<b>严禁在本地静态文件（file:// 协议）或未授权 iframe 中直接调用 Web Bluetooth API</b>。
+      </p>
+
+      <div class="modal-section" style="border-color:rgba(56,189,248,0.35);background:rgba(56,189,248,0.06)">
+        <h3><span>🚀 推荐方法 1：Mac 双击一键启动（最快捷）</span></h3>
+        <p>已在当前下载目录生成了一键启动脚本，无需输入命令：</p>
+        <div style="margin:8px 0;font-size:13px;color:#f1f5f9">
+          👉 打开 <b>访达 (Finder)</b> ➔ <b>下载 (Downloads)</b> ➔ 双击 <b><code
+              style="color:var(--gold);font-weight:bold">双击启动3D魔方.command</code></b>
+        </div>
+        <p style="font-size:12px;color:var(--muted)">系统将自动启动轻量本地服务器，并在 Chrome 中以 <code>http://localhost</code>
+          形式打开，蓝牙权限自动完全开放！</p>
+      </div>
+
+      <div class="modal-section">
+        <h3>
+          <span>💻 方法 2：终端一行命令启动</span>
+          <button class="ghost quick-btn" id="btnCopyCmd" style="font-size:11px">复制命令</button>
+        </h3>
+        <p>打开 Mac 终端 (Terminal)，粘贴并运行以下命令：</p>
+        <div class="cmd-line">
+          <code id="cmdText">cd "/Users/shenruqi/Downloads" && python3 -m http.server 8080</code>
+        </div>
+        <p style="margin-top:8px">启动后在 Chrome 访问：<a href="http://localhost:8080/3d%20(2).html" target="_blank"
+            style="color:var(--accent);text-decoration:underline">http://localhost:8080/3d%20(2).html</a> 即可畅享蓝牙连接！</p>
+      </div>
+
+      <div class="modal-section">
+        <h3><span>🧩 方法 3：若在 iframe / 预览器中嵌入</span></h3>
+        <p>若在 IDE 内置预览器或第三方网页的 <code>&lt;iframe&gt;</code> 中嵌入该页面，需为 iframe 补充蓝牙授权属性：</p>
+        <div class="cmd-line">
+          <code>&lt;iframe src="..." allow="bluetooth; bluetooth-fallback"&gt;&lt;/iframe&gt;</code>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button id="btnDismissPermModal" class="ghost">我知道了</button>
+        <a href="http://localhost:8080/3d%20(2).html" target="_blank" style="text-decoration:none">
+          <button id="btnGotoLocalhost">前往 http://localhost:8080</button>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div id="modeTag">
+    <span>🖱️ 拖拽空白转视角 · 滚轮缩放 · 在<b style="color:var(--fg)">魔方上拖动</b>拧层（含中层） · 键盘 <b>U R F D L B M E S</b>（+Shift
+      反向）</span>
+    <div class="quick-actions">
+      <button class="ghost quick-btn" id="btnScramble">🔀 随机打乱</button>
+      <button class="ghost quick-btn" id="btnResetView">🔄 复原重置</button>
+    </div>
+  </div>
+
+  <!-- ===== 设置抽屉 ===== -->
+  <div id="drawer" class="closed">
+    <header id="drawerHead">
+      <h1>⚙️ 设置 · 蓝牙魔方</h1>
+      <span id="status">未连接</span>
+      <span style="color:var(--muted)">▾</span>
+    </header>
+    <div id="drawerBody">
+      <div class="panel">
+        <h2>连接（csTimer 完整纯前端驱动）</h2>
+        <button id="btnConnect">连接蓝牙魔方</button>
+        <button id="btnDisconnect" class="ghost" disabled>断开</button>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--muted);white-space:nowrap">MAC地址:</span>
+          <input id="macInput" type="text" placeholder="自动记忆 / 手动输入 (如 AB:12:34:5C:15:FC)"
+            style="flex:1;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.12);color:var(--fg);padding:5px 8px;border-radius:6px;font:12px Consolas,monospace;outline:none" />
+          <button id="btnSetMac" class="ghost quick-btn"
+            style="margin:0;padding:4px 10px;font-size:12px;white-space:nowrap">修改MAC</button>
+        </div>
+        <p class="hint" style="margin-top:4px;font-size:11px;color:#94a3b8">
+          💡 <b>csTimer 同款解密</b>：GAN / 魔域加密魔方需 MAC 地址解密数据。首次连接会自动弹窗询问，也可在 <a
+            href="chrome://bluetooth-internals/#devices" target="_blank"
+            style="color:var(--accent);text-decoration:underline">chrome://bluetooth-internals</a> 查找。
+        </p>
+        <div style="margin-top:6px">
+          <label class="chk" style="font-size:12px;color:var(--muted)">
+            <input type="checkbox" id="chkAcceptAll"> 搜索全部蓝牙设备（若默认前缀未搜到魔方可勾选）
+          </label>
+        </div>
+        <div id="cubeinfo" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+        <p class="hint" style="margin-top:6px">100% 纯前端直连（无需后端）：已完整对齐 <b>csTimer</b> 的 <b>GAN (v1/v2/v3/v4)</b>、<b>Moyu
+            魔域 (V10/MY3)</b>、<b>QiYi 奇艺</b>、<b>Giiker 计客</b>、<b>GoCube</b> 协议。</p>
+      </div>
+
+      <div class="panel">
+        <h2>校准 / 对齐</h2>
+        <p class="hint" style="margin-bottom:8px">连接后，把物理魔方摆成与网页魔方相同的已复原状态，点校准建立基准。之后物理转动会实时同步到 3D。</p>
+        <button id="btnCalibrate" class="ghost" disabled>以当前为复原状态校准</button>
+        <div id="cubeinfo2" style="font-size:12px;color:var(--ok);margin-top:4px"></div>
+      </div>
+
+      <div class="panel">
+        <h2>转动记录</h2>
+        <div id="moves">（等待转动…）</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">累计 <span id="moveCount">0</span> 步 ｜ 复原：<span
+            id="solved">—</span></div>
+      </div>
+
+      <div class="panel">
+        <h2>原始数据 dump（协议调试）</h2>
+        <label class="chk"><input type="checkbox" id="rawOnly"> 只显示原始数据</label>
+        <div id="dump"></div>
+        <button class="ghost" id="btnClearDump">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="hud">
+    <span>步数 <span class="big" id="hudMoves">0</span></span>
+    <span style="color:rgba(255,255,255,0.15)">｜</span>
+    <span>复原 <span class="big" id="hudSolved">✔</span></span>
+    <span style="color:rgba(255,255,255,0.15)">｜</span>
+    <span id="hudBt" style="color:var(--muted)">蓝牙未连接</span>
+  </div>
+
+  <script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    // ============================================================
+    //  常量
+    // ============================================================
+    const SIZE = .96, GAP = .02, STEP = SIZE + GAP;
+    const COLORS = { U: 0xffffff, D: 0xffd500, F: 0x00b04c, B: 0x0045ad, R: 0xb90000, L: 0xff5800 };
+    const AXIS = {
+      U: ['y', 1], D: ['y', -1], E: ['y', 0],
+      R: ['x', 1], L: ['x', -1], M: ['x', 0],
+      F: ['z', 1], B: ['z', -1], S: ['z', 0]
+    };
+    const DIR2FACE = { '0,1,0': 'U', '0,-1,0': 'D', '0,0,1': 'F', '0,0,-1': 'B', '1,0,0': 'R', '-1,0,0': 'L' };
+    const FACE_NAMES = ['U', 'R', 'F', 'D', 'L', 'B'];
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3200);
+    }
+
+    // ============================================================
+    //  Three.js 3A 级物理渲染场景
+    // ============================================================
+    const canvas = document.getElementById('cv');
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.18;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const scene = new THREE.Scene();
+
+    // 生成工作室级 HDR 环境光反射 (PMREM)
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(4.1, 3.6, 5.0);
+    camera.lookAt(0, 0, 0);
+
+    // 3A 多光源布光系统（主光投射阴影 + 冷色轮廓光 + 暖色底光）
+    scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+
+    const keyLight = new THREE.DirectionalLight(0xfffbf0, 2.2);
+    keyLight.position.set(6, 10, 7);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 2;
+    keyLight.shadow.camera.far = 25;
+    const d = 3.5;
+    keyLight.shadow.camera.left = -d;
+    keyLight.shadow.camera.right = d;
+    keyLight.shadow.camera.top = d;
+    keyLight.shadow.camera.bottom = -d;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.4);
+    rimLight.position.set(-7, 5, -6);
+    scene.add(rimLight);
+
+    const bounceLight = new THREE.DirectionalLight(0xfbbf24, 0.65);
+    bounceLight.position.set(0, -8, 4);
+    scene.add(bounceLight);
+
+    // 底部暗影接收台与科技感双环基座
+    const shadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(18, 18),
+      new THREE.ShadowMaterial({ opacity: 0.38 })
+    );
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.position.y = -2.35;
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
+
+    const ringGroup = new THREE.Group();
+    ringGroup.position.y = -2.34;
+    ringGroup.rotation.x = -Math.PI / 2;
+    const ringMat1 = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.16, side: THREE.DoubleSide });
+    const ringMat2 = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, side: THREE.DoubleSide });
+    ringGroup.add(new THREE.Mesh(new THREE.RingGeometry(1.85, 1.88, 64), ringMat1));
+    ringGroup.add(new THREE.Mesh(new THREE.RingGeometry(2.45, 2.47, 64), ringMat2));
+    scene.add(ringGroup);
+
+    // ============================================================
+    //  高精度圆角魔方几何体与清漆(UV Coat)材质
+    // ============================================================
+    const cubieGeo = new RoundedBoxGeometry(SIZE, SIZE, SIZE, 5, 0.085);
+    const coreBodyMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0b0d11,
+      roughness: 0.22,
+      metalness: 0.12,
+      clearcoat: 0.65,
+      clearcoatRoughness: 0.15,
+      envMapIntensity: 1.2
+    });
+
+    // 创建带圆角倒角的 3D 立体贴纸几何体
+    function createStickerGeometry(size = 0.80, radius = 0.095, depth = 0.016) {
+      const shape = new THREE.Shape();
+      const s = size / 2;
+      const r = radius;
+      shape.moveTo(-s + r, -s);
+      shape.lineTo(s - r, -s);
+      shape.quadraticCurveTo(s, -s, s, -s + r);
+      shape.lineTo(s, s - r);
+      shape.quadraticCurveTo(s, s, s - r, s);
+      shape.lineTo(-s + r, s);
+      shape.quadraticCurveTo(-s, s, -s, s - r);
+      shape.lineTo(-s, -s + r);
+      shape.quadraticCurveTo(-s, -s, -s + r, -s);
+
+      const geo = new THREE.ExtrudeGeometry(shape, {
+        depth: depth,
+        bevelEnabled: true,
+        bevelSegments: 3,
+        steps: 1,
+        bevelSize: 0.012,
+        bevelThickness: 0.012
+      });
+      geo.center();
+      return geo;
+    }
+
+    const stickerGeo = createStickerGeometry(0.79, 0.09, 0.014);
+    const stickerMaterials = {};
+    for (const [face, hexColor] of Object.entries(COLORS)) {
+      stickerMaterials[face] = new THREE.MeshPhysicalMaterial({
+        color: hexColor,
+        roughness: 0.08,
+        metalness: 0.02,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.04,
+        reflectivity: 1.0,
+        envMapIntensity: 1.45
+      });
+    }
+
+    // 内部磁力舱中心轴装饰球
+    const innerCore = new THREE.Mesh(
+      new THREE.SphereGeometry(0.72, 32, 32),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.4, roughness: 0.3 })
+    );
+    scene.add(innerCore);
+
+    const cubies = [];
+    for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+      const g = new THREE.Group();
+      const bodyMesh = new THREE.Mesh(cubieGeo, coreBodyMat);
+      bodyMesh.castShadow = true;
+      bodyMesh.receiveShadow = true;
+      g.add(bodyMesh);
+
+      const stickers = [];
+      const offset = SIZE / 2 + 0.004;
+      const mk = (face, pos, rot, n) => {
+        const m = new THREE.Mesh(stickerGeo, stickerMaterials[face]);
+        m.position.copy(pos);
+        m.rotation.set(rot.x, rot.y, rot.z);
+        m.castShadow = true;
+        m.receiveShadow = true;
+        m.userData.isSticker = true;
+        m.userData.localNormal = n.clone();
+        g.add(m);
+        stickers.push({ normal: n, color: COLORS[face] });
+      };
+      if (y === 1) mk('U', new THREE.Vector3(0, offset, 0), new THREE.Euler(-Math.PI / 2, 0, 0), new THREE.Vector3(0, 1, 0));
+      if (y === -1) mk('D', new THREE.Vector3(0, -offset, 0), new THREE.Euler(Math.PI / 2, 0, 0), new THREE.Vector3(0, -1, 0));
+      if (z === 1) mk('F', new THREE.Vector3(0, 0, offset), new THREE.Euler(0, 0, 0), new THREE.Vector3(0, 0, 1));
+      if (z === -1) mk('B', new THREE.Vector3(0, 0, -offset), new THREE.Euler(0, Math.PI, 0), new THREE.Vector3(0, 0, -1));
+      if (x === 1) mk('R', new THREE.Vector3(offset, 0, 0), new THREE.Euler(0, Math.PI / 2, 0), new THREE.Vector3(1, 0, 0));
+      if (x === -1) mk('L', new THREE.Vector3(-offset, 0, 0), new THREE.Euler(0, -Math.PI / 2, 0), new THREE.Vector3(-1, 0, 0));
+      g.position.set(x * STEP, y * STEP, z * STEP);
+      g.userData.stickers = stickers;
+      scene.add(g);
+      cubies.push(g);
+    }
+
+    function cubeReset() {
+      if (pivot) {
+        for (const g of [...pivot.children]) scene.attach(g);
+        scene.remove(pivot);
+        pivot = null;
+      }
+      let i = 0;
+      for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+        const g = cubies[i++];
+        g.position.set(x * STEP, y * STEP, z * STEP);
+        g.quaternion.identity();
+      }
+      animQueue.length = 0;
+    }
+
+    // 复原判定：检查 6 个世界方向上的所有贴纸颜色是否各自一致（兼容中层转动导致的中心块整体偏移）
+    function isSolved() {
+      const faceColors = {};
+      for (const c of cubies) {
+        for (const s of c.userData.stickers) {
+          const n = s.normal.clone().applyQuaternion(c.quaternion);
+          const key = n.toArray().map(v => Math.round(v)).join(',');
+          const face = DIR2FACE[key];
+          if (!face) return false;
+          if (faceColors[face] === undefined) faceColors[face] = s.color;
+          else if (faceColors[face] !== s.color) return false;
+        }
+      }
+      return true;
+    }
+
+    // ============================================================
+    //  转动动画与实时跟手拖拽系统（带磁力定位阻尼感）
+    // ============================================================
+    const animQueue = [];
+    let pivot = null, animAxis = new THREE.Vector3(), animTarget = 0, animAngle = 0, onAnimDone = null;
+    let isDraggingTurn = false;
+
+    function enqueue(face, q, fromBLE = false) { animQueue.push({ face, q, fromBLE }); }
+
+    function snapCubiesToGrid() {
+      if (!pivot) return;
+      for (const g of [...pivot.children]) {
+        scene.attach(g);
+        g.position.set(
+          Math.round(g.position.x / STEP) * STEP,
+          Math.round(g.position.y / STEP) * STEP,
+          Math.round(g.position.z / STEP) * STEP
+        );
+        const e = new THREE.Euler().setFromQuaternion(g.quaternion);
+        const halfPi = Math.PI / 2;
+        e.x = Math.round(e.x / halfPi) * halfPi;
+        e.y = Math.round(e.y / halfPi) * halfPi;
+        e.z = Math.round(e.z / halfPi) * halfPi;
+        g.quaternion.setFromEuler(e);
+      }
+      scene.remove(pivot);
+      pivot = null;
+    }
+
+    function tick(time) {
+      requestAnimationFrame(tick);
+      const w = window.innerWidth, h = window.innerHeight;
+      if (canvas.width !== Math.floor(w * renderer.getPixelRatio()) || canvas.height !== Math.floor(h * renderer.getPixelRatio())) {
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      // 底座光环轻微呼吸旋转
+      ringGroup.rotation.z = time * 0.00025;
+
+      if (!isDraggingTurn) {
+        if (!pivot && animQueue.length) startAnim(animQueue.shift());
+        if (pivot) stepAnim();
+      }
+      renderer.render(scene, camera);
+    }
+
+    function startAnim(m) {
+      const [axis, layer] = AXIS[m.face];
+      const turns = m.q === 2 ? 2 : 1;
+      // 核心符号修正：引入 -layer，对齐 Three.js 坐标系与魔方标准面法向（U左转为-π/2，R上转为-π/2）
+      const dir = -layer * (m.q === 3 ? -1 : 1) * turns;
+      pivot = new THREE.Group(); scene.add(pivot);
+      for (const g of cubies) if (Math.round(g.position[axis] / STEP) === layer) pivot.attach(g);
+      animAxis = new THREE.Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0);
+      animTarget = dir * Math.PI / 2; animAngle = 0;
+      onAnimDone = () => {
+        moveCount += turns;
+        if (m.fromBLE) bleMoves++;
+        lastMove = m;
+        updateHUD();
+      };
+    }
+
+    function stepAnim() {
+      // 物理魔方与队列积压极致跟手优化：彻底消除延迟
+      const remaining = animTarget - animAngle;
+      const hasBacklog = animQueue.length > 0;
+      // 积压时极大步长瞬间追平，单步时 ~50ms 顺滑吸附
+      const speed = hasBacklog ? Math.max(0.38, Math.abs(remaining) * 0.75) : Math.max(0.14, Math.abs(remaining) * 0.45);
+      const step = Math.sign(remaining) * Math.min(Math.abs(remaining), speed);
+      animAngle += step;
+      pivot.setRotationFromAxisAngle(animAxis, animAngle);
+      if (Math.abs(animTarget - animAngle) < 0.005) {
+        pivot.setRotationFromAxisAngle(animAxis, animTarget);
+        snapCubiesToGrid();
+        if (onAnimDone) { const f = onAnimDone; onAnimDone = null; f(); }
+      }
+    }
+    requestAnimationFrame(tick);
+
+    // ============================================================
+    //  虚拟交互：空白拖拽=转视角；魔方上按住拖动=实时跟手拧层；松手=磁吸对齐
+    // ============================================================
+    let drag = null;
+    const ray = new THREE.Raycaster();
+    const DRAG_SENSITIVITY = 0.0135; // 鼠标移动像素转化为旋转弧度的灵敏度
+
+    canvas.addEventListener('pointerdown', e => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      const rect = canvas.getBoundingClientRect();
+      ray.setFromCamera(new THREE.Vector2(
+        (e.clientX - rect.left) / rect.width * 2 - 1, -((e.clientY - rect.top) / rect.height * 2 - 1)), camera);
+      const meshes = cubies.flatMap(c => c.children);
+      const hits = ray.intersectObjects(meshes, false);
+      if (hits.length) {
+        // 只有当前没有正在执行的动画时才允许手动跟手拧层
+        if (pivot || animQueue.length) return;
+        drag = {
+          mode: 'turn',
+          sx: e.clientX,
+          sy: e.clientY,
+          hit: hits[0],
+          locked: false,
+          face: null,
+          screenDir: null,
+          rotSign: 1
+        };
+      } else {
+        drag = { mode: 'orbit', px: e.clientX, py: e.clientY };
+      }
+    });
+
+    window.addEventListener('pointermove', e => {
+      if (!drag) return;
+      if (drag.mode === 'orbit') {
+        const dx = e.clientX - drag.px, dy = e.clientY - drag.py; drag.px = e.clientX; drag.py = e.clientY;
+        const sph = new THREE.Spherical().setFromVector3(camera.position);
+        sph.theta -= dx * .0075; sph.phi = Math.max(.18, Math.min(Math.PI - .18, sph.phi - dy * .0075));
+        camera.position.setFromSpherical(sph); camera.lookAt(0, 0, 0);
+        return;
+      }
+
+      if (drag.mode === 'turn') {
+        const dx = e.clientX - drag.sx;
+        const dy = e.clientY - drag.sy;
+
+        // 1. 初始微小移动（>= 4px）时锁定要转动的层与屏幕滑动方向轴
+        if (!drag.locked) {
+          if (Math.hypot(dx, dy) < 4) return;
+          const info = resolveDragLayer(drag.hit, dx, dy);
+          if (!info) return;
+          drag.locked = true;
+          drag.face = info.face;
+          drag.screenDir = info.screenDir;
+          drag.rotSign = info.rotSign;
+
+          const [axis, layer] = AXIS[drag.face];
+          pivot = new THREE.Group();
+          scene.add(pivot);
+          for (const g of cubies) {
+            if (Math.round(g.position[axis] / STEP) === layer) pivot.attach(g);
+          }
+          animAxis = new THREE.Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0);
+          animAngle = 0;
+          isDraggingTurn = true;
+        }
+
+        // 2. 已锁定层：根据鼠标在滑动方向上的投影偏移量，实时同步旋转魔方层
+        if (drag.locked && pivot) {
+          const projectedPixels = dx * drag.screenDir.x + dy * drag.screenDir.y;
+          animAngle = projectedPixels * DRAG_SENSITIVITY * drag.rotSign;
+          pivot.setRotationFromAxisAngle(animAxis, animAngle);
+        }
+      }
+    });
+
+    function finishDragTurn() {
+      if (!drag) return;
+      if (drag.mode === 'turn' && drag.locked && pivot) {
+        isDraggingTurn = false;
+        // 计算松开鼠标时最接近的 90° (π/2) 倍数位置（超过约 28° 即可顺势吸附到下一格）
+        const halfPi = Math.PI / 2;
+        let quarterTurns = Math.round(animAngle / halfPi);
+        if (quarterTurns === 0 && Math.abs(animAngle) > halfPi * 0.32) {
+          quarterTurns = Math.sign(animAngle);
+        }
+        animTarget = quarterTurns * halfPi;
+
+        const [, layer] = AXIS[drag.face];
+        const standardQ = ((-layer * quarterTurns) % 4 + 4) % 4; // 0, 1, 2, 3
+        const face = drag.face;
+        if (standardQ !== 0) {
+          const turns = standardQ === 2 ? 2 : 1;
+          onAnimDone = () => {
+            moveCount += turns;
+            lastMove = { face, q: standardQ, fromBLE: false };
+            updateHUD();
+          };
+        } else {
+          onAnimDone = null;
+        }
+      }
+      drag = null;
+    }
+
+    window.addEventListener('pointerup', finishDragTurn);
+    window.addEventListener('pointercancel', finishDragTurn);
+
+    // 鼠标滚轮无极缩放
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      const sph = new THREE.Spherical().setFromVector3(camera.position);
+      sph.radius = Math.max(4.5, Math.min(12.0, sph.radius + e.deltaY * 0.004));
+      camera.position.setFromSpherical(sph);
+      camera.lookAt(0, 0, 0);
+    }, { passive: false });
+
+    function resolveDragLayer(hit, dx, dy) {
+      // 精确计算点击面的世界主法向
+      let worldN;
+      const cubie = hit.object.parent;
+      if (hit.object.userData && hit.object.userData.isSticker) {
+        worldN = hit.object.userData.localNormal.clone().applyQuaternion(cubie.quaternion);
+      } else {
+        worldN = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+      }
+      // 将法向对齐到最近的整数坐标轴 (X/Y/Z)
+      const absX = Math.abs(worldN.x), absY = Math.abs(worldN.y), absZ = Math.abs(worldN.z);
+      if (absX >= absY && absX >= absZ) worldN.set(Math.sign(worldN.x), 0, 0);
+      else if (absY >= absX && absY >= absZ) worldN.set(0, Math.sign(worldN.y), 0);
+      else worldN.set(0, 0, Math.sign(worldN.z));
+
+      // 候选的两个切向方向（世界坐标轴）
+      const tangents = [];
+      for (const a of ['x', 'y', 'z']) {
+        const v = new THREE.Vector3(); v[a] = 1;
+        if (Math.abs(v.dot(worldN)) < 0.1) tangents.push(v);
+      }
+
+      // 把世界切向方向投影到屏幕 2D 向量，找与鼠标初始滑动方向最匹配的一条
+      const hitPoint = hit.point.clone();
+      const p0 = hitPoint.clone().project(camera);
+      const mouseDir = new THREE.Vector2(dx, dy).normalize();
+
+      let bestTangent = null, bestScreenVec = null, bestDot = 0;
+      for (const t of tangents) {
+        const p1 = hitPoint.clone().add(t).project(camera);
+        const screenVec = new THREE.Vector2(
+          (p1.x - p0.x) * window.innerWidth * 0.5,
+          -(p1.y - p0.y) * window.innerHeight * 0.5
+        ).normalize();
+        const dot = mouseDir.dot(screenVec);
+        if (Math.abs(dot) > Math.abs(bestDot)) {
+          bestDot = dot;
+          bestTangent = t;
+          bestScreenVec = screenVec;
+        }
+      }
+      if (!bestTangent || !bestScreenVec) return null;
+
+      // 当鼠标沿着 +bestScreenVec 移动时，对应的 3D 切向位移为 +bestTangent，力矩 ω = worldN × bestTangent
+      const rotAxisVec = new THREE.Vector3().crossVectors(worldN, bestTangent);
+      const comp = Math.abs(rotAxisVec.x) > 0.5 ? 'x' : Math.abs(rotAxisVec.y) > 0.5 ? 'y' : 'z';
+      const rotSign = rotAxisVec[comp] > 0 ? 1 : -1;
+      const layer = Math.round(cubie.position[comp] / STEP);
+
+      let face;
+      if (comp === 'y') face = layer === 1 ? 'U' : layer === -1 ? 'D' : 'E';
+      else if (comp === 'x') face = layer === 1 ? 'R' : layer === -1 ? 'L' : 'M';
+      else face = layer === 1 ? 'F' : layer === -1 ? 'B' : 'S';
+
+      return { face, screenDir: bestScreenVec, rotSign };
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT') return;
+      const f = e.key.toUpperCase();
+      if ('URFDLBMES'.includes(f) && f.length === 1 && !e.ctrlKey && !e.metaKey) {
+        enqueue(f, e.shiftKey ? 3 : 1);
+      }
+    });
+
+    // 顶部快捷操作：随机打乱与重置
+    document.getElementById('btnScramble').onclick = () => {
+      if (animQueue.length > 5) return;
+      const faces = ['U', 'D', 'R', 'L', 'F', 'B'];
+      let prev = '';
+      for (let i = 0; i < 18; i++) {
+        let f;
+        do { f = faces[Math.floor(Math.random() * faces.length)]; } while (f === prev);
+        prev = f;
+        enqueue(f, Math.random() > 0.5 ? 1 : 3);
+      }
+    };
+    document.getElementById('btnResetView').onclick = () => {
+      cubeReset();
+      moveCount = 0; bleMoves = 0; lastMove = null;
+      movesEl.innerHTML = '（等待转动…）';
+      updateHUD();
+    };
+    document.getElementById('btnClearDump').onclick = () => {
+      dumpEl.textContent = '';
+    };
+
+    // ============================================================
+    //  HUD
+    // ============================================================
+    let moveCount = 0, bleMoves = 0, lastMove = null;
+    const hudMoves = document.getElementById('hudMoves'), hudSolved = document.getElementById('hudSolved'),
+      hudBt = document.getElementById('hudBt'), movesEl = document.getElementById('moves'),
+      moveCountEl = document.getElementById('moveCount'), solvedEl = document.getElementById('solved');
+    function updateHUD() {
+      hudMoves.textContent = moveCount;
+      const ok = isSolved();
+      hudSolved.textContent = ok ? '✔' : '✘';
+      hudSolved.style.color = ok ? '#34d399' : '#f87171';
+      moveCountEl.textContent = moveCount;
+      solvedEl.textContent = ok ? '✔ 复原' : '未复原';
+      solvedEl.style.color = ok ? '#34d399' : '#f87171';
+      if (lastMove) {
+        if (movesEl.textContent === '（等待转动…）') movesEl.textContent = '';
+        const s = document.createElement('span'); s.className = 'mv';
+        s.textContent = lastMove.face + (lastMove.q === 2 ? '2' : lastMove.q === 3 ? "'" : '');
+        movesEl.appendChild(s);
+        while (movesEl.children.length > 12) movesEl.removeChild(movesEl.firstChild);
+      }
+    }
+    updateHUD();
+
+    // ============================================================
+    //  BLE（完整移植 csTimer 开源库 src/js/hardware/ 蓝牙魔方协议栈）
+    //  支持：GAN (v1/v2/v3/v4 + AES-128)、Giiker 计客、GoCube、QiYi 奇艺、Moyu 魔域
+    // ============================================================
+    const drawer = document.getElementById('drawer');
+    document.getElementById('drawerHead').onclick = () => drawer.classList.toggle('closed');
+    const statusEl = document.getElementById('status'), infoEl = document.getElementById('cubeinfo'),
+      info2El = document.getElementById('cubeinfo2'), dumpEl = document.getElementById('dump'),
+      macInputEl = document.getElementById('macInput');
+
+    // ---- 1. LZString 解压算法 (用于解压 csTimer 内置密钥表) ----
+    const LZString = (() => {
+      const keyStrBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+      const baseReverseDic = {};
+      function getBaseValue(alphabet, character) {
+        if (!baseReverseDic[alphabet]) {
+          baseReverseDic[alphabet] = {};
+          for (let i = 0; i < alphabet.length; i++) baseReverseDic[alphabet][alphabet.charAt(i)] = i;
+        }
+        return baseReverseDic[alphabet][character];
+      }
+      function _decompress(length, resetValue, getNextValue) {
+        const dictionary = [0, 1, 2];
+        let next, enlargeIn = 4, dictSize = 4, numBits = 3, entry = "", result = [], i, w, bits, resb, maxpower, power, c;
+        const data = { val: getNextValue(0), position: resetValue, index: 1 };
+        bits = 0; maxpower = Math.pow(2, 2); power = 1;
+        while (power !== maxpower) {
+          resb = data.val & data.position; data.position >>= 1;
+          if (data.position === 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
+          bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
+        }
+        switch (next = bits) {
+          case 0:
+            bits = 0; maxpower = Math.pow(2, 8); power = 1;
+            while (power !== maxpower) {
+              resb = data.val & data.position; data.position >>= 1;
+              if (data.position === 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
+              bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
+            }
+            c = String.fromCharCode(bits); break;
+          case 1:
+            bits = 0; maxpower = Math.pow(2, 16); power = 1;
+            while (power !== maxpower) {
+              resb = data.val & data.position; data.position >>= 1;
+              if (data.position === 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
+              bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
+            }
+            c = String.fromCharCode(bits); break;
+          case 2: return "";
+        }
+        dictionary[3] = c; w = c; result.push(c);
+        while (true) {
+          if (data.index > length) return "";
+          bits = 0; maxpower = Math.pow(2, numBits); power = 1;
+          while (power !== maxpower) {
+            resb = data.val & data.position; data.position >>= 1;
+            if (data.position === 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
+            bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
+          }
+          switch (c = bits) {
+            case 0:
+              bits = 0; maxpower = Math.pow(2, 8); power = 1;
+              while (power !== maxpower) {
+                resb = data.val & data.position; data.position >>= 1;
+                if (data.position === 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
+                bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
+              }
+              dictionary[dictSize++] = String.fromCharCode(bits); c = dictSize - 1; enlargeIn--; break;
+            case 1:
+              bits = 0; maxpower = Math.pow(2, 16); power = 1;
+              while (power !== maxpower) {
+                resb = data.val & data.position; data.position >>= 1;
+                if (data.position === 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
+                bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
+              }
+              dictionary[dictSize++] = String.fromCharCode(bits); c = dictSize - 1; enlargeIn--; break;
+            case 2: return result.join('');
+          }
+          if (enlargeIn === 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+          if (dictionary[c]) { entry = dictionary[c]; }
+          else { if (c === dictSize) entry = w + w.charAt(0); else return null; }
+          result.push(entry);
+          dictionary[dictSize++] = w + entry.charAt(0);
+          enlargeIn--; w = entry;
+          if (enlargeIn === 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+        }
+      }
+      return {
+        decompressFromEncodedURIComponent(input) {
+          if (input == null) return "";
+          if (input === "") return null;
+          input = input.replace(/ /g, "+");
+          return _decompress(input.length, 32, index => getBaseValue(keyStrBase64, input.charAt(index)));
+        }
+      };
+    })();
+
+    // ---- 2. 纯 JS AES-128 加解密引擎 (移植自 csTimer aes128) ----
+    // ---- 2. 纯 JS AES-128 加解密引擎 (1:1 官方完整移植自 csTimer sha256.js) ----
+    const AES128 = (() => {
+      const Sbox = [99, 124, 119, 123, 242, 107, 111, 197, 48, 1, 103, 43, 254, 215, 171, 118, 202, 130, 201, 125, 250, 89, 71, 240, 173, 212, 162, 175, 156, 164, 114, 192, 183, 253, 147, 38, 54, 63, 247, 204, 52, 165, 229, 241, 113, 216, 49, 21, 4, 199, 35, 195, 24, 150, 5, 154, 7, 18, 128, 226, 235, 39, 178, 117, 9, 131, 44, 26, 27, 110, 90, 160, 82, 59, 214, 179, 41, 227, 47, 132, 83, 209, 0, 237, 32, 252, 177, 91, 106, 203, 190, 57, 74, 76, 88, 207, 208, 239, 170, 251, 67, 77, 51, 133, 69, 249, 2, 127, 80, 60, 159, 168, 81, 163, 64, 143, 146, 157, 56, 245, 188, 182, 218, 33, 16, 255, 243, 210, 205, 12, 19, 236, 95, 151, 68, 23, 196, 167, 126, 61, 100, 93, 25, 115, 96, 129, 79, 220, 34, 42, 144, 136, 70, 238, 184, 20, 222, 94, 11, 219, 224, 50, 58, 10, 73, 6, 36, 92, 194, 211, 172, 98, 145, 149, 228, 121, 231, 200, 55, 109, 141, 213, 78, 169, 108, 86, 244, 234, 101, 122, 174, 8, 186, 120, 37, 46, 28, 166, 180, 198, 232, 221, 116, 31, 75, 189, 139, 138, 112, 62, 181, 102, 72, 3, 246, 14, 97, 53, 87, 185, 134, 193, 29, 158, 225, 248, 152, 17, 105, 217, 142, 148, 155, 30, 135, 233, 206, 85, 40, 223, 140, 161, 137, 13, 191, 230, 66, 104, 65, 153, 45, 15, 176, 84, 187, 22];
+      const SboxI = new Uint8Array(256);
+      const ShiftTabI = [0, 13, 10, 7, 4, 1, 14, 11, 8, 5, 2, 15, 12, 9, 6, 3];
+      const xtime = new Uint8Array(256);
+
+      for (let i = 0; i < 256; i++) {
+        SboxI[Sbox[i]] = i;
+      }
+      for (let i = 0; i < 128; i++) {
+        xtime[i] = i << 1;
+        xtime[128 + i] = (i << 1) ^ 0x1b;
+      }
+
+      function addRoundKey(state, rkey) {
+        for (let i = 0; i < 16; i++) {
+          state[i] ^= rkey[i];
+        }
+      }
+
+      function shiftSubAdd(state, rkey) {
+        const state0 = state.slice();
+        for (let i = 0; i < 16; i++) {
+          state[i] = SboxI[state0[ShiftTabI[i]]] ^ rkey[i];
+        }
+      }
+
+      function shiftSubAddI(state, rkey) {
+        const state0 = state.slice();
+        for (let i = 0; i < 16; i++) {
+          state[ShiftTabI[i]] = Sbox[state0[i] ^ rkey[i]];
+        }
+      }
+
+      function mixColumns(state) {
+        for (let i = 12; i >= 0; i -= 4) {
+          const s0 = state[i + 0];
+          const s1 = state[i + 1];
+          const s2 = state[i + 2];
+          const s3 = state[i + 3];
+          const h = s0 ^ s1 ^ s2 ^ s3;
+          state[i + 0] ^= h ^ xtime[s0 ^ s1];
+          state[i + 1] ^= h ^ xtime[s1 ^ s2];
+          state[i + 2] ^= h ^ xtime[s2 ^ s3];
+          state[i + 3] ^= h ^ xtime[s3 ^ s0];
+        }
+      }
+
+      function mixColumnsInv(state) {
+        for (let i = 0; i < 16; i += 4) {
+          const s0 = state[i + 0];
+          const s1 = state[i + 1];
+          const s2 = state[i + 2];
+          const s3 = state[i + 3];
+          const h = s0 ^ s1 ^ s2 ^ s3;
+          const xh = xtime[h];
+          const h1 = xtime[xtime[xh ^ s0 ^ s2]] ^ h;
+          const h2 = xtime[xtime[xh ^ s1 ^ s3]] ^ h;
+          state[i + 0] ^= h1 ^ xtime[s0 ^ s1];
+          state[i + 1] ^= h2 ^ xtime[s1 ^ s2];
+          state[i + 2] ^= h1 ^ xtime[s2 ^ s3];
+          state[i + 3] ^= h2 ^ xtime[s3 ^ s0];
+        }
+      }
+
+      return class AES128 {
+        constructor(key) {
+          const exKey = Array.from(key);
+          let Rcon = 1;
+          for (let i = 16; i < 176; i += 4) {
+            let tmp = exKey.slice(i - 4, i);
+            if (i % 16 === 0) {
+              tmp = [Sbox[tmp[1]] ^ Rcon, Sbox[tmp[2]], Sbox[tmp[3]], Sbox[tmp[0]]];
+              Rcon = xtime[Rcon];
+            }
+            for (let j = 0; j < 4; j++) {
+              exKey[i + j] = exKey[i + j - 16] ^ tmp[j];
+            }
+          }
+          this.key = exKey;
+        }
+
+        decrypt(block) {
+          addRoundKey(block, this.key.slice(160, 176));
+          for (let i = 144; i >= 16; i -= 16) {
+            shiftSubAdd(block, this.key.slice(i, i + 16));
+            mixColumnsInv(block);
+          }
+          shiftSubAdd(block, this.key.slice(0, 16));
+          return block;
+        }
+
+        encrypt(block) {
+          shiftSubAddI(block, this.key.slice(0, 16));
+          for (let i = 16; i < 160; i += 16) {
+            mixColumns(block);
+            shiftSubAddI(block, this.key.slice(i, i + 16));
+          }
+          addRoundKey(block, this.key.slice(160, 176));
+          return block;
+        }
+      };
+    })();
+
+    // ---- 3. csTimer 蓝牙 UUID 与密钥常量 (1:1 严格对齐 csTimer 官方源码) ----
+    const UUIDS = {
+      // GAN Gen1 (f95a / fff0 / a000)
+      GAN_V1_META:    '0000fff0-0000-1000-8000-00805f9b34fb',
+      GAN_V1_SERVICE: '0000a000-0000-1000-8000-00805f9b34fb',
+      GAN_V1_NOTIFY:  '0000a001-0000-1000-8000-00805f9b34fb',
+      GAN_V1_WRITE:   '0000a002-0000-1000-8000-00805f9b34fb',
+      // GAN Gen2 (6e400001)
+      GAN_V2_SERVICE: '6e400001-b5a3-f393-e0a9-e50e24dc4179',
+      GAN_V2_NOTIFY:  '28be4cb6-cd67-11e9-a32f-2a2ae2dbcce4',
+      GAN_V2_WRITE:   '28be4a4a-cd67-11e9-a32f-2a2ae2dbcce4',
+      // GAN Gen3 (8653000a)
+      GAN_V3_SERVICE: '8653000a-43e6-47b7-9cb0-5fc21d4ae340',
+      GAN_V3_NOTIFY:  '8653000b-43e6-47b7-9cb0-5fc21d4ae340',
+      GAN_V3_WRITE:   '8653000c-43e6-47b7-9cb0-5fc21d4ae340',
+      // GAN Gen4 (00000010)
+      GAN_V4_SERVICE: '00000010-0000-fff7-fff6-fff5fff4fff0',
+      GAN_V4_NOTIFY:  '0000fff6-0000-1000-8000-00805f9b34fb',
+      GAN_V4_WRITE:   '0000fff5-0000-1000-8000-00805f9b34fb',
+      // Giiker 计客 / 小米超级魔方
+      GIIKER_SERVICE: '0000aadb-0000-1000-8000-00805f9b34fb',
+      GIIKER_NOTIFY:  '0000aadc-0000-1000-8000-00805f9b34fb',
+      GIIKER_RW_SVC:  '0000aaaa-0000-1000-8000-00805f9b34fb',
+      // GoCube / Rubiks Connected
+      GOCUBE_SERVICE: '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+      GOCUBE_WRITE:   '6e400002-b5a3-f393-e0a9-e50e24dcca9e',
+      GOCUBE_NOTIFY:  '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
+      // QiYi 奇艺智能魔方 / XMD Tornado V4
+      QIYI_SERVICE:   '0000fff0-0000-1000-8000-00805f9b34fb',
+      QIYI_CHAR:      '0000fff6-0000-1000-8000-00805f9b34fb',
+      // Moyu 魔域 WCU_MY3 (0783b03e-7735) & 兼容老版 (0783b03e-8535)
+      MOYU32_SERVICE:  '0783b03e-7735-b5a0-1760-a305d2795cb0',
+      MOYU32_NOTIFY:   '0783b03e-7735-b5a0-1760-a305d2795cb1',
+      MOYU32_WRITE:    '0783b03e-7735-b5a0-1760-a305d2795cb2',
+      MOYU2_SERVICE:   '0783b03e-7735-b5a0-1760-a305d2795cb0',
+      MOYU2_NOTIFY:    '0783b03e-7735-b5a0-1760-a305d2795cb1',
+      MOYU2_WRITE:     '0783b03e-7735-b5a0-1760-a305d2795cb2',
+      MOYU_OLD_SVC:    '0783b03e-8535-b5a0-7140-a304d2495cb7',
+      MOYU_OLD_NOTIFY: '0783b03e-8535-b5a0-7140-a304d2495cb8',
+      MOYU_OLD_WRITE:  '0783b03e-8535-b5a0-7140-a304d2495cb9',
+      // Moyu MHC (00001000)
+      MOYU1_SERVICE:  '00001000-0000-1000-8000-00805f9b34fb',
+      MOYU1_WRITE:    '00001001-0000-1000-8000-00805f9b34fb',
+      MOYU1_NOTIFY:   '00001002-0000-1000-8000-00805f9b34fb',
+      // Legacy GAN 0x55
+      GAN_RAW_SVC:    '0000a000-0000-1000-8000-00805f9b34fb',
+      GAN_RAW_NOTIFY: '0000a001-0000-1000-8000-00805f9b34fb',
+      GAN_RAW_WRITE:  '0000a002-0000-1000-8000-00805f9b34fb'
+    };
+
+    // csTimer 官方硬件驱动完全一致密钥字典 (LZString 压缩)
+    const GAN_KEYS = [
+      "NoRgnAHANATADDWJYwMxQOxiiEcfYgSK6Hpr4TYCs0IG1OEAbDszALpA",
+      "NoNg7ANATFIQnARmogLBRUCs0oAYN8U5J45EQBmFADg0oJAOSlUQF0g",
+      "NoRgNATGBs1gLABgQTjCeBWSUDsYBmKbCeMADjNnXxHIoIF0g",
+      "NoRg7ANAzBCsAMEAsioxBEIAc0Cc0ATJkgSIYhXIjhMQGxgC6QA",
+      "NoVgNAjAHGBMYDYCcdJgCwTFBkYVgAY9JpJYUsYBmAXSA",
+      "NoRgNAbAHGAsAMkwgMyzClH0LFcArHnAJzIqIBMGWEAukA",
+      "NoDhBoEYFYCZwJwHZyzuAzJVGBsqZF8YEoMMDsEJIEAGcaaHcAFlYF0g",
+      "NoRgTA7ANAnNYAYAcUliiE0QwMxQFZo1UoAWANlTKjBg1xXAVnoggF0g"
+    ];
+    const MOYU_KEYS = [
+      "NoJgjANGYJwQrADgjEUAMBmKAWCP4JNIRswt81Yp5DztE1EB2AXSA",
+      "NoRg7ANAzArNAc1IigFgqgTB9MCcE8cAbBCJpKgeaSAAxTSPxgC6QA"
+    ];
+    const QIYI_KEY = "NoDg7ANAjGkEwBYCc0xQnADAVgkzGAzHNAGyRTanQi5QIFyHrjQMQgsC6QA";
+
+    let device = null, notifyChar = null, writeChar = null;
+    let activeDriver = '';
+    let ganDecoder = null;
+    let ganPrevMoves = -1;
+    let savedMacMap = {};
+    try {
+      savedMacMap = JSON.parse(localStorage.getItem('giiMacMap') || '{}');
+    } catch (e) {
+      savedMacMap = {};
+    }
+    const defaultInitMac = Object.values(savedMacMap)[0] || 'AB:12:34:5C:15:FC';
+    if (macInputEl && !macInputEl.value) {
+      macInputEl.value = defaultInitMac;
+    }
+
+    function setStatus(t, c = '') { statusEl.textContent = t; statusEl.className = c; }
+    function logDump(l) {
+      const t = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      dumpEl.textContent = `[${t}] ${l}\n` + dumpEl.textContent;
+      if (dumpEl.textContent.length > 40000) dumpEl.textContent = dumpEl.textContent.slice(0, 30000);
+    }
+    const hex = b => [...b].map(x => x.toString(16).padStart(2, '0')).join(' ');
+
+    function emitBleMove(face, q) {
+      enqueue(face, q, true);
+    }
+
+    // ---- 4. csTimer 官方加解密引擎 (1:1 移植自 csTimer gancube.js / moyucube.js) ----
+    function createGanDecoder(keyIdx, ivIdx, macStr) {
+      let key = JSON.parse(LZString.decompressFromEncodedURIComponent(GAN_KEYS[keyIdx]));
+      let iv  = JSON.parse(LZString.decompressFromEncodedURIComponent(GAN_KEYS[ivIdx]));
+      if (macStr) {
+        const macParts = macStr.replace(/[^0-9A-Fa-f]/g, '').match(/.{1,2}/g);
+        if (macParts && macParts.length === 6) {
+          const mac = macParts.map(h => parseInt(h, 16)).reverse();
+          for (let i = 0; i < 6; i++) {
+            key[i] = (key[i] + mac[i]) % 255;
+            iv[i]  = (iv[i] + mac[i]) % 255;
+          }
+        }
+      }
+      const aes = new AES128(key);
+      return {
+        iv,
+        aes,
+        decode(u8) {
+          const ret = Array.from(u8);
+          if (ret.length > 16) {
+            const offset = ret.length - 16;
+            const block = this.aes.decrypt(ret.slice(offset));
+            for (let i = 0; i < 16; i++) ret[i + offset] = block[i] ^ (~~this.iv[i]);
+          }
+          this.aes.decrypt(ret);
+          for (let i = 0; i < 16; i++) ret[i] ^= (~~this.iv[i]);
+          return ret;
+        },
+        encode(arr) {
+          const ret = Array.from(arr);
+          for (let i = 0; i < 16; i++) ret[i] ^= (~~this.iv[i]);
+          this.aes.encrypt(ret);
+          if (ret.length > 16) {
+            const offset = ret.length - 16;
+            const block = ret.slice(offset);
+            for (let i = 0; i < 16; i++) block[i] ^= (~~this.iv[i]);
+            this.aes.encrypt(block);
+            for (let i = 0; i < 16; i++) ret[i + offset] = block[i];
+          }
+          return new Uint8Array(ret);
+        }
+      };
+    }
+
+    function createMoyuDecoder(macStr) {
+      let key = JSON.parse(LZString.decompressFromEncodedURIComponent(MOYU_KEYS[0]));
+      let iv  = JSON.parse(LZString.decompressFromEncodedURIComponent(MOYU_KEYS[1]));
+      if (macStr) {
+        const macParts = macStr.replace(/[^0-9A-Fa-f]/g, '').match(/.{1,2}/g);
+        if (macParts && macParts.length === 6) {
+          const mac = macParts.map(h => parseInt(h, 16)).reverse();
+          for (let i = 0; i < 6; i++) {
+            key[i] = (key[i] + mac[i]) % 255;
+            iv[i]  = (iv[i] + mac[i]) % 255;
+          }
+        }
+      }
+      const aes = new AES128(key);
+      return {
+        iv,
+        aes,
+        decode(u8) {
+          const ret = Array.from(u8);
+          if (ret.length > 16) {
+            const offset = ret.length - 16;
+            const block = this.aes.decrypt(ret.slice(offset));
+            for (let i = 0; i < 16; i++) ret[i + offset] = block[i] ^ (~~this.iv[i]);
+          }
+          this.aes.decrypt(ret);
+          for (let i = 0; i < 16; i++) ret[i] ^= (~~this.iv[i]);
+          return ret;
+        },
+        encode(arr) {
+          const ret = Array.from(arr);
+          for (let i = 0; i < 16; i++) ret[i] ^= (~~this.iv[i]);
+          this.aes.encrypt(ret);
+          if (ret.length > 16) {
+            const offset = ret.length - 16;
+            const block = ret.slice(offset);
+            for (let i = 0; i < 16; i++) block[i] ^= (~~this.iv[i]);
+            this.aes.encrypt(block);
+            for (let i = 0; i < 16; i++) ret[i + offset] = block[i];
+          }
+          return new Uint8Array(ret);
+        }
+      };
+    }
+
+    // 尝试通过蓝牙广播数据包快速提取 MAC (csTimer waitForAdvs 逻辑)
+    async function tryGetMacFromAdv(dev) {
+      if (!dev?.watchAdvertisements) return null;
+      return new Promise((resolve) => {
+        let done = false;
+        const abortCtrl = new AbortController();
+        const timer = setTimeout(() => {
+          if (!done) {
+            done = true;
+            try { abortCtrl.abort(); } catch (e) {}
+            dev.removeEventListener('advertisementreceived', onAdv);
+            resolve(null);
+          }
+        }, 1200);
+
+        function onAdv(event) {
+          if (!event.manufacturerData || event.manufacturerData.size === 0) return;
+          for (const id of ALL_CICS) {
+            if (event.manufacturerData.has(id)) {
+              const dv = event.manufacturerData.get(id);
+              if (dv && dv.byteLength >= 6) {
+                const mac = [];
+                for (let i = 0; i < 6; i++) {
+                  mac.push((dv.getUint8(dv.byteLength - i - 1) + 0x100).toString(16).slice(1));
+                }
+                done = true;
+                clearTimeout(timer);
+                try { abortCtrl.abort(); } catch (e) {}
+                dev.removeEventListener('advertisementreceived', onAdv);
+                const res = mac.join(':').toUpperCase();
+                logDump(`[广播自动获取MAC] 成功解析 MAC: ${res}`);
+                resolve(res);
+                return;
+              }
+            }
+          }
+        }
+
+        try {
+          dev.addEventListener('advertisementreceived', onAdv);
+          dev.watchAdvertisements({ signal: abortCtrl.signal });
+        } catch (e) {
+          clearTimeout(timer);
+          resolve(null);
+        }
+      });
+    }
+
+    // 获取当前手动输入或缓存的 MAC 地址（优先从输入框与 localStorage 读取）
+    function getKnownMac(dev) {
+      const devName = dev?.name || '';
+      const devId = dev?.id || '';
+      const manual = (macInputEl?.value || '').trim();
+      if (/^([0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}$/.test(manual)) {
+        const m = manual.toUpperCase().replace(/-/g, ':');
+        if (devName) savedMacMap[devName] = m;
+        if (devId) savedMacMap[devId] = m;
+        try { localStorage.setItem('giiMacMap', JSON.stringify(savedMacMap)); } catch (e) { }
+        return m;
+      }
+      const cached = (devName && savedMacMap[devName]) || (devId && savedMacMap[devId]) || '';
+      if (cached && macInputEl) {
+        macInputEl.value = cached;
+      }
+      return cached;
+    }
+
+    // 核心：对齐 csTimer reqMacAddr，无 MAC 时弹出同款交互提示框输入并持久化
+    async function reqMacAddr(dev, forcePrompt = false, defaultMac = null) {
+      let devName = dev?.name || '';
+      let devId = dev?.id || '';
+
+      let mac = getKnownMac(dev);
+      if (!mac && defaultMac) mac = defaultMac;
+      if (!mac && /^QY-QYSC-.-[0-9A-F]{4}$/i.test(devName)) {
+        mac = 'CC:A3:00:00:' + devName.slice(-4, -2) + ':' + devName.slice(-2);
+        if (macInputEl) macInputEl.value = mac;
+        savedMacMap[devName] = mac;
+        try { localStorage.setItem('giiMacMap', JSON.stringify(savedMacMap)); } catch (e) { }
+        return mac;
+      }
+      if (!mac && /^WCU_MY32_[0-9A-F]{4}$/i.test(devName)) {
+        mac = 'CF:30:16:00:' + devName.slice(9, 11) + ':' + devName.slice(11, 13);
+        if (macInputEl) macInputEl.value = mac;
+        savedMacMap[devName] = mac;
+        try { localStorage.setItem('giiMacMap', JSON.stringify(savedMacMap)); } catch (e) { }
+        return mac;
+      }
+
+      const fallbackMac = 'ab:12:34:5c:15:fc';
+      const candidateMac = mac || (devName && savedMacMap[devName]) || defaultMac || Object.values(savedMacMap)[0] || fallbackMac;
+
+      if (!mac || forcePrompt) {
+        const csTimerMsg =
+          '请输入智能硬件的MAC地址(xx:xx:xx:xx:xx:xx),你可以通过这个链接 chrome://bluetooth-internals/#devices找到MAC地址,或者修改以下配置让csTimer自动获取蓝牙地址:\n' +
+          'Chrome:在浏览器设置里打开chrome://flags/#enable-experimental-web-platform-features\n' +
+          'Bluefy:在浏览器设置里开启Enable BLE Advertisements';
+
+        const input = prompt(csTimerMsg, candidateMac);
+        if (input && /^([0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}$/.test(input.trim())) {
+          mac = input.trim().toUpperCase().replace(/-/g, ':');
+        } else if (input && input.trim() !== '') {
+          const hexOnly = input.replace(/[^0-9a-fA-F]/g, '');
+          if (hexOnly.length === 12) {
+            mac = hexOnly.match(/.{1,2}/g).join(':').toUpperCase();
+          }
+        }
+        if (!mac) {
+          mac = candidateMac;
+        }
+        if (macInputEl) macInputEl.value = mac;
+        if (devName) savedMacMap[devName] = mac;
+        if (devId) savedMacMap[devId] = mac;
+        try { localStorage.setItem('giiMacMap', JSON.stringify(savedMacMap)); } catch (e) { }
+        logDump(`[MAC已记录] ${mac} (${devName || devId})`);
+      }
+      return mac;
+    }
+
+    // 动态使用新 MAC 重新初始化解密器与握手握手包（用户中途改 MAC 时立即生效）
+    async function reinitDecoderWithMac(newMac) {
+      if (!device || !device.gatt?.connected || !activeDriver) return;
+      logDump(`[动态解密] 使用 MAC "${newMac}" 重新初始化 ${activeDriver} 解密器与握手...`);
+      try {
+        if (activeDriver.includes('Moyu')) {
+          ganDecoder = createMoyuDecoder(newMac);
+          if (writeChar) {
+            const req = new Array(20).fill(0); req[0] = 0xA1;
+            await writeChar.writeValue(ganDecoder.encode(req)).catch(() => {});
+            const req3 = new Array(20).fill(0); req3[0] = 0xA3;
+            await writeChar.writeValue(ganDecoder.encode(req3)).catch(() => {});
+          }
+        } else if (activeDriver.includes('GAN Gen3')) {
+          ganDecoder = createGanDecoder(2, 3, newMac);
+          if (writeChar) {
+            const req = new Array(16).fill(0); req[0] = 0x68; req[1] = 4;
+            await writeChar.writeValue(ganDecoder.encode(req)).catch(() => {});
+            const req1 = new Array(16).fill(0); req1[0] = 0x68; req1[1] = 1;
+            await writeChar.writeValue(ganDecoder.encode(req1)).catch(() => {});
+          }
+        } else if (activeDriver.includes('GAN Gen4')) {
+          const is251 = /^(GAN251Ui|GAN251UI|gan251ui|GANic251|ganic251)/i.test(device?.name || '');
+          ganDecoder = createGanDecoder(is251 ? 6 : 2, is251 ? 7 : 3, newMac);
+          if (writeChar) {
+            const req = new Array(20).fill(0); req[0] = 0xDF; req[1] = 0x03;
+            await writeChar.writeValue(ganDecoder.encode(req)).catch(() => {});
+            const reqF = new Array(20).fill(0); reqF[0] = 0xDD; reqF[1] = 0x04; reqF[3] = 0xED;
+            await writeChar.writeValue(ganDecoder.encode(reqF)).catch(() => {});
+          }
+        } else if (activeDriver.includes('GAN Gen2')) {
+          const ver = (device?.name || '').startsWith('AiCube') ? 1 : 0;
+          ganDecoder = createGanDecoder(2 + ver * 2, 3 + ver * 2, newMac);
+          ganPrevMoves = -1;
+          if (macInputEl) macInputEl.value = newMac;
+          if (writeChar) {
+            const reqHw = new Array(20).fill(0); reqHw[0] = 5;
+            await writeChar.writeValue(ganDecoder.encode(reqHw)).catch(() => {});
+            const reqFace = new Array(20).fill(0); reqFace[0] = 4;
+            await writeChar.writeValue(ganDecoder.encode(reqFace)).catch(() => {});
+            const reqBat = new Array(20).fill(0); reqBat[0] = 9;
+            await writeChar.writeValue(ganDecoder.encode(reqBat)).catch(() => {});
+          }
+        } else if (activeDriver.includes('QiYi')) {
+          const macBytes = newMac.split(':').map(h => parseInt(h, 16)).reverse();
+          const hello = [0x00, 0x6b, 0x01, 0x00, 0x00, 0x22, 0x06, 0x00, 0x02, 0x08, 0x00, ...macBytes];
+          sendQiyiMessage(hello);
+        }
+        showToast('✔ 解密器已更新并重新握手！请转动魔方测试');
+      } catch (err) {
+        logDump(`[动态解密失败] ${err.message}`);
+      }
+    }
+
+    document.getElementById('btnSetMac')?.addEventListener('click', async () => {
+      const m = await reqMacAddr(device || { name: 'Smart Cube' }, true);
+      if (m) {
+        showToast(`✔ MAC 已保存: ${m}`);
+        reinitDecoderWithMac(m);
+      }
+    });
+
+    macInputEl?.addEventListener('change', () => {
+      const manual = macInputEl.value.trim().toUpperCase().replace(/-/g, ':');
+      if (/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(manual)) {
+        macInputEl.value = manual;
+        if (device && device.name) {
+          savedMacMap[device.name] = manual;
+          savedMacMap[device.id] = manual;
+          try { localStorage.setItem('giiMacMap', JSON.stringify(savedMacMap)); } catch (e) { }
+        }
+        showToast(`✔ MAC 地址已更新: ${manual}`);
+        reinitDecoderWithMac(manual);
+      }
+    });
+
+    // GAN V2 协议解析 (csTimer parseV2Data)
+    function onGanV2Notify(ev) {
+      const raw = new Uint8Array(ev.target.value.buffer, ev.target.value.byteOffset, ev.target.value.byteLength);
+      if (!ganDecoder) return;
+      const data = ganDecoder.decode(raw);
+      const bin = data.map(v => (v + 256).toString(2).slice(1)).join('');
+      const mode = parseInt(bin.slice(0, 4), 2);
+      logDump(`[GAN-v2] mode=${mode} dec: ${hex(data)} (raw: ${hex(raw)})`);
+      if (document.getElementById('rawOnly').checked) return;
+
+      if (mode === 2) {
+        const moveCnt = parseInt(bin.slice(4, 12), 2);
+        if (moveCnt === ganPrevMoves) return;
+        const nMoves = ganPrevMoves === -1 ? 1 : Math.min((moveCnt - ganPrevMoves) & 255, 7);
+        ganPrevMoves = moveCnt;
+        const moves = [];
+        let keyChkInc = 0;
+        for (let i = nMoves - 1; i >= 0; i--) {
+          const m = parseInt(bin.slice(12 + i * 5, 17 + i * 5), 2);
+          const axis = m >> 1;
+          const pow = m & 1;
+          if (axis < 6) {
+            const face = "URFDLB".charAt(axis);
+            const q = pow === 1 ? 3 : 1;
+            moves.push(face + (q === 3 ? "'" : ""));
+            emitBleMove(face, q);
+          } else {
+            keyChkInc = 1;
+          }
+        }
+        if (keyChkInc > 0) {
+          logDump('⚠️ [提示] 校验到异常转动数据，说明当前 MAC 地址与魔方物理芯片不匹配，请点击“修改MAC”输入正确地址。');
+        }
+        if (moves.length) logDump(`  ↳ GAN-v2 动作: ${moves.join(' ')} (计数:${moveCnt})`);
+      } else if (mode === 4) {
+        ganPrevMoves = parseInt(bin.slice(4, 12), 2);
+      } else if (mode !== 1 && mode !== 5 && mode !== 9) {
+        logDump(`⚠️ [解密提示] mode=${mode} (非标准 1/2/4/5/9)，说明当前 MAC 地址与魔方硬件密钥不匹配，请点击“修改MAC”输入正确的 MAC。`);
+      }
+    }
+
+    // GAN V3 协议解析 (csTimer parseV3Data)
+    function onGanV3Notify(ev) {
+      const raw = new Uint8Array(ev.target.value.buffer, ev.target.value.byteOffset, ev.target.value.byteLength);
+      if (!ganDecoder) return;
+      const data = ganDecoder.decode(raw);
+      const bin = data.map(v => (v + 256).toString(2).slice(1)).join('');
+      if (parseInt(bin.slice(0, 8), 2) !== 0x55) return;
+      const mode = parseInt(bin.slice(8, 16), 2);
+      logDump(`[GAN-v3] mode=${mode} dec: ${hex(data)}`);
+      if (document.getElementById('rawOnly').checked) return;
+
+      if (mode === 1) { // 移动事件
+        const moveCnt = parseInt(bin.slice(24, 32) + bin.slice(16, 24), 2);
+        if (moveCnt === ganPrevMoves || ganPrevMoves === -1) {
+          ganPrevMoves = moveCnt;
+          return;
+        }
+        ganPrevMoves = moveCnt;
+        const pow = parseInt(bin.slice(72, 74), 2);
+        const axisHot = parseInt(bin.slice(74, 80), 2);
+        const axisIdx = [2, 32, 8, 1, 16, 4].indexOf(axisHot);
+        if (axisIdx >= 0) {
+          const face = "URFDLB".charAt(axisIdx);
+          const q = pow === 1 ? 3 : (pow === 2 ? 2 : 1);
+          logDump(`  ↳ GAN-v3 动作: ${face}${q === 3 ? "'" : (q === 2 ? "2" : "")}`);
+          emitBleMove(face, q);
+        }
+      } else if (mode === 2) { // 状态恢复
+        ganPrevMoves = parseInt(bin.slice(32, 40) + bin.slice(24, 32), 2);
+      }
+    }
+
+    // GAN V4 协议解析 (csTimer parseV4Data)
+    function onGanV4Notify(ev) {
+      const raw = new Uint8Array(ev.target.value.buffer, ev.target.value.byteOffset, ev.target.value.byteLength);
+      if (!ganDecoder) return;
+      const data = ganDecoder.decode(raw);
+      const bin = data.map(v => (v + 256).toString(2).slice(1)).join('');
+      const mode = parseInt(bin.slice(0, 8), 2);
+      logDump(`[GAN-v4] mode=0x${mode.toString(16)} dec: ${hex(data)}`);
+      if (document.getElementById('rawOnly').checked) return;
+
+      if (mode === 0x01) { // 移动事件
+        const moveCnt = parseInt(bin.slice(56, 64) + bin.slice(48, 56), 2);
+        if (moveCnt === ganPrevMoves || ganPrevMoves === -1) {
+          ganPrevMoves = moveCnt;
+          return;
+        }
+        ganPrevMoves = moveCnt;
+        const pow = parseInt(bin.slice(64, 66), 2);
+        const faceHot = parseInt(bin.slice(66, 72), 2);
+        let axis = [2, 32, 8, 1, 16, 4].indexOf(faceHot);
+        if (axis === -1 && /GAN251/i.test(device?.name || '')) {
+          let rev = 0;
+          for (let b = 0; b < 6; b++) if (faceHot & (1 << b)) rev |= 1 << (5 - b);
+          axis = [2, 32, 8, 1, 16, 4].indexOf(rev);
+        }
+        if (axis >= 0) {
+          const face = "URFDLB".charAt(axis);
+          const q = pow === 1 ? 3 : (pow === 2 ? 2 : 1);
+          logDump(`  ↳ GAN-v4 动作: ${face}${q === 3 ? "'" : (q === 2 ? "2" : "")}`);
+          emitBleMove(face, q);
+        }
+      } else if (mode === 0xED) { // 状态事件
+        ganPrevMoves = parseInt(bin.slice(24, 32) + bin.slice(16, 24), 2);
+      }
+    }
+
+    // ---- 5. 魔域 Moyu WCU_MY32 / V10 AI 协议解析 (移植自 csTimer moyucube.js) ----
+    let moyuPrevMoves = -1;
+    function onMoyu2Notify(ev) {
+      const raw = new Uint8Array(ev.target.value.buffer, ev.target.value.byteOffset, ev.target.value.byteLength);
+      if (!ganDecoder) return;
+      const data = ganDecoder.decode(raw);
+      const bin = data.map(v => (v + 256).toString(2).slice(1)).join('');
+      const mode = parseInt(bin.slice(0, 8), 2);
+      logDump(`[Moyu-V10] mode=0x${mode.toString(16)} dec: ${hex(data)}`);
+      if (document.getElementById('rawOnly').checked) return;
+
+      if (mode === 0xa3) {
+        moyuPrevMoves = parseInt(bin.slice(152, 160), 2);
+      } else if (mode === 0xa5) {
+        const moveCnt = parseInt(bin.slice(88, 96), 2);
+        if (moveCnt === moyuPrevMoves || moyuPrevMoves === -1) {
+          moyuPrevMoves = moveCnt;
+          return;
+        }
+        const nMoves = Math.min((moveCnt - moyuPrevMoves) & 255, 5);
+        moyuPrevMoves = moveCnt;
+        const moves = [];
+        for (let i = nMoves - 1; i >= 0; i--) {
+          const axis = parseInt(bin.slice(96 + i * 5, 101 + i * 5), 2);
+          const face = "FBUDLR".charAt(axis >> 1);
+          const q = (axis & 1) === 1 ? 3 : 1;
+          if (face) {
+            moves.push(face + (q === 3 ? "'" : ""));
+            emitBleMove(face, q);
+          }
+        }
+        if (moves.length) logDump(`  ↳ Moyu 动作: ${moves.join(' ')}`);
+      }
+    }
+
+    // ---- 6. Giiker 计客 / 小米超级魔方协议解析 (移植自 csTimer giikercube.js) ----
+    let giikerFirst = true;
+    function onGiikerNotify(ev) {
+      const b = new Uint8Array(ev.target.value.buffer, ev.target.value.byteOffset, ev.target.value.byteLength);
+      const val = Array.from(b);
+      if (val[18] === 0xa7) {
+        const key = [176, 81, 104, 224, 86, 137, 237, 119, 38, 26, 193, 161, 210, 126, 150, 81, 93, 13, 236, 249, 89, 235, 88, 24, 113, 81, 214, 131, 130, 199, 2, 169, 39, 165, 171, 41];
+        const k1 = (val[19] >> 4) & 0xf, k2 = val[19] & 0xf;
+        for (let i = 0; i < 18; i++) val[i] = (val[i] - (key[i + k1] + key[i + k2]) + 256) & 0xff;
+      }
+      logDump(`[Giiker] notify: ${hex(val)}`);
+      if (document.getElementById('rawOnly').checked) return;
+      if (giikerFirst) { giikerFirst = false; return; }
+
+      const highNibble = val[16] >> 4;
+      const lowNibble = val[16] & 0xf;
+      const giikerFaces = "BDLURF";
+      if (highNibble >= 1 && highNibble <= 6) {
+        const face = giikerFaces.charAt(highNibble - 1);
+        const q = (lowNibble === 1 || lowNibble === 9) ? 1 : 3;
+        logDump(`  ↳ Giiker 动作: ${face}${q === 3 ? "'" : ""}`);
+        emitBleMove(face, q);
+      }
+    }
+
+    // ---- 7. GoCube / Rubiks Connected 协议解析 (移植自 csTimer gocube.js) ----
+    function onGoCubeNotify(ev) {
+      const b = new Uint8Array(ev.target.value.buffer, ev.target.value.byteOffset, ev.target.value.byteLength);
+      logDump(`[GoCube] notify(${b.length}B): ${hex(b)}`);
+      if (document.getElementById('rawOnly').checked) return;
+      if (b[0] !== 0x2a || b[b.length - 2] !== 0x0d || b[b.length - 1] !== 0x0a) return;
+      const msgType = b[2];
+      const msgLen = b.length - 6;
+      if (msgType === 1) {
+        const chars = [];
+        for (let i = 0; i < msgLen; i += 2) {
+          const axis = "BFUDRL".charAt(b[3 + i] >> 1);
+          const pow = (b[3 + i] & 1) === 0 ? 1 : 3;
+          if (axis) {
+            chars.push(axis + (pow === 3 ? "'" : ""));
+            emitBleMove(axis, pow);
+          }
+        }
+        if (chars.length) logDump(`  ↳ GoCube 动作: ${chars.join(' ')}`);
+      }
+    }
+
+    // ---- 8. 奇艺智能魔方协议解析 (移植自 csTimer qiyicube.js) ----
+    let qiyiDecoder = null;
+    let qiyiLastTs = -1;
+    function crc16modbus(data) {
+      let crc = 0xFFFF;
+      for (let i = 0; i < data.length; i++) {
+        crc ^= data[i];
+        for (let j = 0; j < 8; j++) crc = (crc & 0x1) > 0 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+      }
+      return crc;
+    }
+    function sendQiyiMessage(content) {
+      if (!writeChar || !qiyiDecoder) return;
+      const msg = [0xfe, 4 + content.length];
+      for (let i = 0; i < content.length; i++) msg.push(content[i]);
+      const crc = crc16modbus(msg);
+      msg.push(crc & 0xff, crc >> 8);
+      const npad = (16 - (msg.length % 16)) % 16;
+      for (let i = 0; i < npad; i++) msg.push(0);
+      const enc = new Uint8Array(msg.length);
+      for (let i = 0; i < msg.length; i += 16) {
+        const block = msg.slice(i, i + 16);
+        qiyiDecoder.aes.encrypt(block);
+        for (let j = 0; j < 16; j++) enc[i + j] = block[j];
+      }
+      writeChar.writeValue(enc).catch(() => { });
+    }
+    function onQiYiNotify(ev) {
+      const enc = new Uint8Array(ev.target.value.buffer, ev.target.value.byteOffset, ev.target.value.byteLength);
+      if (!qiyiDecoder) return;
+      const msg = [];
+      for (let i = 0; i < enc.length; i += 16) {
+        const block = Array.from(enc.slice(i, i + 16));
+        qiyiDecoder.aes.decrypt(block);
+        for (let j = 0; j < 16; j++) msg.push(block[j]);
+      }
+      const len = msg[1];
+      const slice = msg.slice(0, len);
+      logDump(`[QiYi] op=0x${slice[2]?.toString(16)} dec: ${hex(slice)}`);
+      if (document.getElementById('rawOnly').checked) return;
+
+      if (slice[2] === 0x02) {
+        sendQiyiMessage(slice.slice(2, 7));
+        qiyiLastTs = (slice[3] << 24) | (slice[4] << 16) | (slice[5] << 8) | slice[6];
+      } else if (slice[2] === 0x03) {
+        sendQiyiMessage(slice.slice(2, 7));
+        const curTs = (slice[3] << 24) | (slice[4] << 16) | (slice[5] << 8) | slice[6];
+        if (curTs !== qiyiLastTs) {
+          qiyiLastTs = curTs;
+          const moveByte = slice[34];
+          const axis = [4, 1, 3, 0, 2, 5][(moveByte - 1) >> 1];
+          const pow = ((moveByte - 1) & 1) === 0 ? 1 : 3;
+          if (axis !== undefined) {
+            const face = "URFDLB".charAt(axis);
+            logDump(`  ↳ QiYi 动作: ${face}${pow === 3 ? "'" : ""}`);
+            emitBleMove(face, pow);
+          }
+        }
+      }
+    }
+
+    // ---- 9. 原有 GAN 0x55 明文协议兼容保留 ----
+    function onLegacyGan0x55Notify(ev) {
+      const dv = ev.target.value;
+      const b = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
+      logDump(`[GAN-0x55] notify(${b.length}B): ${hex(b)}`);
+      if (document.getElementById('rawOnly').checked) return;
+      if (b[0] === 0x55 && b.length >= 20) {
+        const mv = [];
+        for (let i = 11; i <= 14; i++) {
+          const byte = b[i];
+          if (byte === 0xff) continue;
+          for (const nib of [byte >> 4, byte & 0xf]) {
+            if (nib === 0x0f || nib === 0) continue;
+            const face = nib >> 1, inv = nib & 1;
+            if (face <= 5) mv.push({ face: FACE_NAMES[face], q: inv ? 3 : 1 });
+          }
+        }
+        if (mv.length) {
+          logDump(`  ↳ 解析: ${mv.map(m => m.face + (m.q === 3 ? "'" : "")).join(' ')}`);
+          mv.forEach(m => emitBleMove(m.face, m.q));
+        }
+      }
+    }
+
+    // csTimer 核心工具：128位 UUID 格式化与集合查找
+    function toUuid128(uuid) {
+      if (!uuid) return '';
+      uuid = uuid.toLowerCase();
+      if (/^[0-9a-f]{4}$/.test(uuid)) {
+        uuid = '0000' + uuid + '-0000-1000-8000-00805f9b34fb';
+      }
+      return uuid;
+    }
+
+    function findUUID(elems, uuid) {
+      if (!elems) return null;
+      const target = toUuid128(uuid);
+      for (let i = 0; i < elems.length; i++) {
+        if (toUuid128(elems[i].uuid) === target) return elems[i];
+      }
+      return null;
+    }
+
+    // ---- 10. 蓝牙多协议常量与环境探测 (1:1 完整对齐 csTimer bluetooth.js) ----
+    const GAN_CIC_LIST = Array.from({ length: 256 }, (_, i) => (i << 8) | 0x01);
+    const MOYU32_CIC_LIST = [0x0000, ...Array.from({ length: 255 }, (_, i) => (i + 1) << 8)];
+    const QIYI_CIC_LIST = [0x0504];
+    const ALL_CICS = [...new Set([...GAN_CIC_LIST, ...MOYU32_CIC_LIST, ...QIYI_CIC_LIST])];
+
+    // 探测当前运行环境是否存在 Permissions Policy 拦截
+    function checkBluetoothEnv() {
+      const isFile = location.protocol === 'file:';
+      const isInIframe = window.self !== window.top;
+      const isSecure = window.isSecureContext;
+      const isPolicyBlocked = (document.permissionsPolicy && !document.permissionsPolicy.allowsFeature('bluetooth'));
+      const isBlocked = isFile || isPolicyBlocked || !isSecure;
+
+      return {
+        ok: !isBlocked,
+        isFile,
+        isInIframe,
+        isSecure,
+        isPolicyBlocked,
+        desc: isFile ? 'file:// 本地文件协议受限' : (isInIframe ? 'iframe 未授权 allow="bluetooth"' : '非安全上下文')
+      };
+    }
+
+    const permBannerEl = document.getElementById('permBanner');
+    const permModalEl = document.getElementById('permModalOverlay');
+
+    function openPermModal() {
+      if (permModalEl) permModalEl.classList.add('active');
+    }
+    function closePermModal() {
+      if (permModalEl) permModalEl.classList.remove('active');
+    }
+
+    document.getElementById('btnOpenPermModal')?.addEventListener('click', openPermModal);
+    document.getElementById('btnClosePermModal')?.addEventListener('click', closePermModal);
+    document.getElementById('btnDismissPermModal')?.addEventListener('click', closePermModal);
+    permModalEl?.addEventListener('click', (e) => {
+      if (e.target === permModalEl) closePermModal();
+    });
+
+    document.getElementById('btnCopyCmd')?.addEventListener('click', async () => {
+      const cmd = document.getElementById('cmdText')?.textContent || '';
+      try {
+        await navigator.clipboard.writeText(cmd);
+        showToast('✔ 命令已复制到剪贴板，请到 Mac 终端运行');
+      } catch (e) {
+        showToast('请手动选中文本并按 Cmd+C 复制');
+      }
+    });
+
+    // 页面加载时自动探测环境权限
+    const envStatus = checkBluetoothEnv();
+    if (!envStatus.ok) {
+      if (permBannerEl) permBannerEl.style.display = 'flex';
+      setStatus('权限受限 (file://)', 'err');
+      logDump(`[安全警告] 现代浏览器禁止在 ${envStatus.desc} 下使用 Web Bluetooth。`);
+      logDump(`[解决方案] 双击当前目录的 "双击启动3D魔方.command" 或通过 http://localhost:8080 打开`);
+    }
+
+    // ---- 11. 蓝牙设备多协议自动探测与连接主流程 (1:1 严格对齐 csTimer bluetooth.js) ----
+    document.getElementById('btnConnect').onclick = async () => {
+      if (!navigator.bluetooth) {
+        setStatus('浏览器不支持', 'err');
+        showToast('请使用 Chrome / Edge 桌面版浏览器连接蓝牙');
+        return;
+      }
+
+      // 1. 若当前处于 file:// 等受限环境，直接弹出清晰修复指引
+      const env = checkBluetoothEnv();
+      if (!env.ok) {
+        setStatus('安全策略限制', 'err');
+        openPermModal();
+        showToast('现代浏览器限制在 file:// 协议调用蓝牙，请查看解决指南');
+        return;
+      }
+
+      // 2. 检查系统蓝牙硬件是否处于开启状态 (csTimer chkAvail)
+      if (navigator.bluetooth.getAvailability) {
+        try {
+          const available = await navigator.bluetooth.getAvailability();
+          if (!available) {
+            setStatus('系统蓝牙未开启', 'err');
+            showToast('提示：请先在 Mac 系统设置中打开蓝牙开关');
+          }
+        } catch (e) { }
+      }
+
+      try {
+        setStatus('扫描中…');
+        // 汇总 csTimer 所有魔方的全部 Service UUIDs，防止任何型号报 No Services found
+        const allOptionalServices = [
+          UUIDS.GAN_V1_SERVICE, UUIDS.GAN_V1_META, UUIDS.GAN_RAW_SVC,
+          UUIDS.GAN_V2_SERVICE, UUIDS.GAN_V3_SERVICE, UUIDS.GAN_V4_SERVICE,
+          UUIDS.GIIKER_SERVICE, UUIDS.GIIKER_RW_SVC,
+          UUIDS.GOCUBE_SERVICE, UUIDS.QIYI_SERVICE,
+          UUIDS.MOYU1_SERVICE, UUIDS.MOYU32_SERVICE, UUIDS.MOYU2_SERVICE,
+          'battery_service', 'device_information'
+        ];
+
+        const acceptAll = document.getElementById('chkAcceptAll')?.checked;
+        let requestOptions;
+
+        if (acceptAll) {
+          logDump('扫描模式: 全部设备 (acceptAllDevices)');
+          requestOptions = {
+            acceptAllDevices: true,
+            optionalServices: allOptionalServices,
+            optionalManufacturerData: ALL_CICS
+          };
+        } else {
+          logDump('扫描模式: 智能过滤已支持型号 (csTimer filters)');
+          requestOptions = {
+            filters: [
+              { namePrefix: 'GAN' },
+              { namePrefix: 'MG' },
+              { namePrefix: 'AiCube' },
+              { namePrefix: 'Gi' },
+              { namePrefix: 'Mi Smart' },
+              { namePrefix: 'Mi ' },
+              { namePrefix: 'Hi-' },
+              { namePrefix: 'GoCube' },
+              { namePrefix: 'Rubiks' },
+              { namePrefix: 'QY-QYSC' },
+              { namePrefix: 'XMD-' },
+              { namePrefix: 'WCU_MY3' },
+              { namePrefix: 'Moyu' },
+              { namePrefix: 'MY' },
+              { namePrefix: 'MHC' },
+              { services: [UUIDS.GAN_RAW_SVC] },
+              { services: [UUIDS.GAN_V2_SERVICE] },
+              { services: [UUIDS.GAN_V3_SERVICE] },
+              { services: [UUIDS.GAN_V4_SERVICE] },
+              { services: [UUIDS.GIIKER_SERVICE] },
+              { services: [UUIDS.MOYU32_SERVICE] }
+            ],
+            optionalServices: allOptionalServices,
+            optionalManufacturerData: ALL_CICS
+          };
+        }
+
+        device = await navigator.bluetooth.requestDevice(requestOptions);
+
+        const devName = (device.name || '').trim();
+        logDump(`选中设备: "${devName}" (id: ${device.id})`);
+        setStatus('建立连接中…');
+
+        device.addEventListener('gattserverdisconnected', () => {
+          setStatus('已断开', 'err');
+          hudBt.textContent = '蓝牙已断开';
+          document.getElementById('btnConnect').disabled = false;
+          document.getElementById('btnDisconnect').disabled = true;
+          logDump('蓝牙设备连接已断开');
+        });
+
+        // 尝试从广播包获取 MAC (csTimer waitForAdvs 逻辑)
+        let advMac = null;
+        try {
+          advMac = await tryGetMacFromAdv(device);
+        } catch (e) { }
+
+        // 连接 GATT 服务器并一次性获取全部 Service (1:1 遵循 csTimer 协议栈稳定规范)
+        const server = await device.gatt.connect();
+        await new Promise(r => setTimeout(r, 200));
+
+        const services = await server.getPrimaryServices();
+        logDump(`发现 GATT 服务数量: ${services.length}`);
+
+        ganPrevMoves = -1;
+        moyuPrevMoves = -1;
+        giikerFirst = true;
+
+        let matched = false;
+
+        // ---- A. GAN 系列 (GAN / MG / AiCube) ----
+        if (/^(GAN|MG|AiCube)/i.test(devName) || findUUID(services, UUIDS.GAN_V3_SERVICE) || findUUID(services, UUIDS.GAN_V4_SERVICE) || (findUUID(services, UUIDS.GAN_V2_SERVICE) && /GAN|MG|AiCube/i.test(devName))) {
+          const svcV3 = findUUID(services, UUIDS.GAN_V3_SERVICE);
+          const svcV4 = findUUID(services, UUIDS.GAN_V4_SERVICE);
+          const svcV2 = findUUID(services, UUIDS.GAN_V2_SERVICE);
+          const svcMeta = findUUID(services, UUIDS.GAN_V1_META);
+          const svcData = findUUID(services, UUIDS.GAN_V1_SERVICE);
+
+          if (svcV3) {
+            matched = true;
+            activeDriver = 'GAN Gen3 (csTimer)';
+            let mac = advMac || getKnownMac(device);
+            if (!mac) mac = await reqMacAddr(device, true);
+            ganDecoder = createGanDecoder(2, 3, mac);
+            const chrcts = await svcV3.getCharacteristics();
+            notifyChar = findUUID(chrcts, UUIDS.GAN_V3_NOTIFY);
+            writeChar = findUUID(chrcts, UUIDS.GAN_V3_WRITE);
+            await notifyChar.startNotifications();
+            notifyChar.addEventListener('characteristicvaluechanged', onGanV3Notify);
+            // csTimer Gen3 握手流程：查询硬件、面状态、电池
+            const reqHw = new Array(16).fill(0); reqHw[0] = 0x68; reqHw[1] = 4;
+            await writeChar.writeValue(ganDecoder.encode(reqHw)).catch(() => {});
+            const reqFace = new Array(16).fill(0); reqFace[0] = 0x68; reqFace[1] = 1;
+            await writeChar.writeValue(ganDecoder.encode(reqFace)).catch(() => {});
+            const reqBat = new Array(16).fill(0); reqBat[0] = 0x68; reqBat[1] = 7;
+            await writeChar.writeValue(ganDecoder.encode(reqBat)).catch(() => {});
+          } else if (svcV4) {
+            matched = true;
+            const is251 = /^(GAN251Ui|GAN251UI|gan251ui|GANic251|ganic251)/i.test(devName);
+            activeDriver = is251 ? 'GAN 251 UI (csTimer)' : 'GAN Gen4 (csTimer)';
+            let mac = advMac || getKnownMac(device);
+            if (!mac) mac = await reqMacAddr(device, true);
+            ganDecoder = createGanDecoder(is251 ? 6 : 2, is251 ? 7 : 3, mac);
+            const chrcts = await svcV4.getCharacteristics();
+            notifyChar = findUUID(chrcts, UUIDS.GAN_V4_NOTIFY);
+            writeChar = findUUID(chrcts, UUIDS.GAN_V4_WRITE);
+            await notifyChar.startNotifications();
+            notifyChar.addEventListener('characteristicvaluechanged', onGanV4Notify);
+            // csTimer Gen4 握手流程
+            const reqHw = new Array(20).fill(0); reqHw[0] = 0xDF; reqHw[1] = 0x03;
+            await writeChar.writeValue(ganDecoder.encode(reqHw)).catch(() => {});
+            const reqFace = new Array(20).fill(0); reqFace[0] = 0xDD; reqFace[1] = 0x04; reqFace[3] = 0xED;
+            await writeChar.writeValue(ganDecoder.encode(reqFace)).catch(() => {});
+            const reqBat = new Array(20).fill(0); reqBat[0] = 0xDD; reqBat[1] = 0x04; reqBat[3] = 0xEF;
+            await writeChar.writeValue(ganDecoder.encode(reqBat)).catch(() => {});
+          } else if (svcV2) {
+            matched = true;
+            const ver = devName.startsWith('AiCube') ? 1 : 0;
+            activeDriver = ver === 1 ? 'AiCube (csTimer)' : 'GAN Gen2 (csTimer)';
+            let mac = advMac || getKnownMac(device);
+            if (!mac) mac = await reqMacAddr(device, true);
+            ganDecoder = createGanDecoder(2 + ver * 2, 3 + ver * 2, mac);
+            const chrcts = await svcV2.getCharacteristics();
+            notifyChar = findUUID(chrcts, UUIDS.GAN_V2_NOTIFY);
+            writeChar = findUUID(chrcts, UUIDS.GAN_V2_WRITE);
+            await notifyChar.startNotifications();
+            notifyChar.addEventListener('characteristicvaluechanged', onGanV2Notify);
+            // csTimer Gen2 握手流程
+            const reqHw = new Array(20).fill(0); reqHw[0] = 5;
+            await writeChar.writeValue(ganDecoder.encode(reqHw)).catch(() => {});
+            const reqFace = new Array(20).fill(0); reqFace[0] = 4;
+            await writeChar.writeValue(ganDecoder.encode(reqFace)).catch(() => {});
+            const reqBat = new Array(20).fill(0); reqBat[0] = 9;
+            await writeChar.writeValue(ganDecoder.encode(reqBat)).catch(() => {});
+          } else if (svcData && svcMeta) {
+            matched = true;
+            activeDriver = 'GAN Gen1 (csTimer)';
+            notifyChar = findUUID(await svcData.getCharacteristics(), UUIDS.GAN_V1_NOTIFY);
+            await notifyChar.startNotifications();
+            notifyChar.addEventListener('characteristicvaluechanged', onLegacyGan0x55Notify);
+          }
+        }
+
+        // ---- B. 魔域 Moyu 系列 (WCU_MY3 / Moyu / MY / 0783b03e) ----
+        if (!matched && (/^(WCU_MY3|Moyu|MY)/i.test(devName) || findUUID(services, UUIDS.MOYU32_SERVICE) || findUUID(services, UUIDS.MOYU_OLD_SVC))) {
+          matched = true;
+          activeDriver = 'Moyu V10/MY32 (csTimer)';
+          const mySvc = findUUID(services, UUIDS.MOYU32_SERVICE) || findUUID(services, UUIDS.MOYU_OLD_SVC);
+          let defaultMac = null;
+          if (/^WCU_MY32_[0-9A-F]{4}$/i.test(devName)) {
+            defaultMac = 'CF:30:16:00:' + devName.slice(9, 11) + ':' + devName.slice(11, 13);
+          }
+          let mac = advMac || getKnownMac(device) || defaultMac;
+          if (!mac) mac = await reqMacAddr(device, true, defaultMac);
+          ganDecoder = createMoyuDecoder(mac);
+          const myChrs = await mySvc.getCharacteristics();
+          notifyChar = findUUID(myChrs, UUIDS.MOYU32_NOTIFY) || findUUID(myChrs, UUIDS.MOYU_OLD_NOTIFY);
+          writeChar = findUUID(myChrs, UUIDS.MOYU32_WRITE) || findUUID(myChrs, UUIDS.MOYU_OLD_WRITE);
+          await notifyChar.startNotifications();
+          notifyChar.addEventListener('characteristicvaluechanged', onMoyu2Notify);
+          // csTimer MoYu 握手：161 (0xA1 信息), 163 (0xA3 状态), 164 (0xA4 电量)
+          const req1 = new Array(20).fill(0); req1[0] = 0xA1;
+          await writeChar.writeValue(ganDecoder.encode(req1)).catch(() => {});
+          const req3 = new Array(20).fill(0); req3[0] = 0xA3;
+          await writeChar.writeValue(ganDecoder.encode(req3)).catch(() => {});
+          const req4 = new Array(20).fill(0); req4[0] = 0xA4;
+          await writeChar.writeValue(ganDecoder.encode(req4)).catch(() => {});
+        }
+
+        // ---- C. 奇艺智能魔方系列 (QY-QYSC / XMD / 0000fff0 且为 fff6 特征) ----
+        if (!matched && (/^(QY-QYSC|XMD-)/i.test(devName) || (findUUID(services, UUIDS.QIYI_SERVICE) && !findUUID(services, UUIDS.GAN_V4_SERVICE)))) {
+          const qySvc = findUUID(services, UUIDS.QIYI_SERVICE);
+          if (qySvc) {
+            const chrcts = await qySvc.getCharacteristics();
+            const qyChr = findUUID(chrcts, UUIDS.QIYI_CHAR);
+            if (qyChr) {
+              matched = true;
+              activeDriver = 'QiYi 奇艺 (csTimer)';
+              let defaultMac = null;
+              if (/^(QY-QYSC|XMD-TornadoV4-i)-.-[0-9A-F]{4}$/i.test(devName)) {
+                defaultMac = 'CC:A3:00:00:' + devName.slice(-4, -2) + ':' + devName.slice(-2);
+              }
+              let mac = advMac || getKnownMac(device) || defaultMac;
+              if (!mac) mac = await reqMacAddr(device, false, defaultMac);
+              const key = JSON.parse(LZString.decompressFromEncodedURIComponent(QIYI_KEY));
+              qiyiDecoder = { aes: new AES128(key) };
+              notifyChar = qyChr;
+              writeChar = qyChr;
+              await notifyChar.startNotifications();
+              notifyChar.addEventListener('characteristicvaluechanged', onQiYiNotify);
+              const macBytes = mac ? mac.split(':').map(h => parseInt(h, 16)).reverse() : [0, 0, 0, 0, 0, 0];
+              const hello = [0x00, 0x6b, 0x01, 0x00, 0x00, 0x22, 0x06, 0x00, 0x02, 0x08, 0x00, ...macBytes];
+              sendQiyiMessage(hello);
+            }
+          }
+        }
+
+        // ---- D. Giiker 计客 / 小米超级魔方 (0000aadb) ----
+        if (!matched && (/^(Gi|Mi Smart|Mi |Hi-)/i.test(devName) || findUUID(services, UUIDS.GIIKER_SERVICE))) {
+          const gSvc = findUUID(services, UUIDS.GIIKER_SERVICE);
+          if (gSvc) {
+            matched = true;
+            activeDriver = 'Giiker 计客 (csTimer)';
+            notifyChar = await gSvc.getCharacteristic(UUIDS.GIIKER_NOTIFY);
+            await notifyChar.startNotifications();
+            notifyChar.addEventListener('characteristicvaluechanged', onGiikerNotify);
+          }
+        }
+
+        // ---- E. GoCube / Rubiks Connected (6e400001 ca9e) ----
+        if (!matched && (/^(GoCube|Rubiks)/i.test(devName) || findUUID(services, UUIDS.GOCUBE_SERVICE))) {
+          const goSvc = findUUID(services, UUIDS.GOCUBE_SERVICE);
+          if (goSvc) {
+            const chrcts = await goSvc.getCharacteristics();
+            const rChr = findUUID(chrcts, UUIDS.GOCUBE_NOTIFY);
+            const wChr = findUUID(chrcts, UUIDS.GOCUBE_WRITE);
+            if (rChr && wChr) {
+              matched = true;
+              activeDriver = 'GoCube / Rubiks (csTimer)';
+              notifyChar = rChr;
+              writeChar = wChr;
+              await notifyChar.startNotifications();
+              notifyChar.addEventListener('characteristicvaluechanged', onGoCubeNotify);
+              await writeChar.writeValue(new Uint8Array([0x38]).buffer).catch(() => {});
+            }
+          }
+        }
+
+        // ---- F. 原有 GAN 0x55 明文服务 (0000a000) ----
+        if (!matched && findUUID(services, UUIDS.GAN_RAW_SVC)) {
+          const rawSvc = findUUID(services, UUIDS.GAN_RAW_SVC);
+          matched = true;
+          activeDriver = 'GAN 0x55 (Raw)';
+          notifyChar = await rawSvc.getCharacteristic(UUIDS.GAN_RAW_NOTIFY);
+          try { writeChar = await rawSvc.getCharacteristic(UUIDS.GAN_RAW_WRITE); } catch (e) { }
+          await notifyChar.startNotifications();
+          notifyChar.addEventListener('characteristicvaluechanged', onLegacyGan0x55Notify);
+        }
+
+        if (!matched) {
+          throw new Error(`设备 "${devName}" 未匹配到已知蓝牙协议服务，请先在系统蓝牙设置中忽略/取消配对该魔方，再直接从网页点击连接`);
+        }
+
+        const currentMac = getKnownMac(device);
+        setStatus('已连接 ✔', 'ok');
+        hudBt.textContent = `蓝牙已连接：${devName || '魔方'} [${activeDriver}]`;
+        infoEl.textContent = `设备: ${devName || device.id} ｜ 协议: ${activeDriver}${currentMac ? ' ｜ MAC: ' + currentMac : ''}`;
+        document.getElementById('btnConnect').disabled = true;
+        document.getElementById('btnDisconnect').disabled = false;
+        document.getElementById('btnCalibrate').disabled = false;
+        showToast(`✔ ${activeDriver} 连接成功！`);
+      } catch (err) {
+        const isPermErr = err.name === 'SecurityError' || (err.message && err.message.toLowerCase().includes('permissions policy'));
+        if (isPermErr) {
+          setStatus('受浏览器安全策略限制', 'err');
+          openPermModal();
+          logDump(`[权限错误] ${err.message}`);
+          logDump(`请通过本地服务 (http://localhost:8080) 打开页面以授权 Web Bluetooth。`);
+        } else {
+          setStatus('失败: ' + err.message, 'err');
+          logDump(`连接错误: ${err.message}`);
+        }
+      }
+    };
+
+    document.getElementById('btnDisconnect').onclick = () => device && device.gatt.disconnect();
+
+    document.getElementById('btnCalibrate').onclick = () => {
+      cubeReset(); moveCount = 0; bleMoves = 0; lastMove = null;
+      movesEl.innerHTML = '（等待转动…）';
+      updateHUD();
+      document.getElementById('cubeinfo2').textContent = '✔ 已以当前状态为复原基准，物理转动将实时同步。';
+    };
+  </script>
+</body>
+
+</html>

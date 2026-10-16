@@ -57,3 +57,4 @@
 64. prime-agent-mvp -- [prime-agent 最小执行](./prime-agent-mvp)
 65. capnweb-gadget-mvp -- [capnweb 最小执行](./capnweb-gadget-mvp)
 66. cordis-mvp -- [cordis 插件系统最小执行](./cordis-mvp)
+67. RubiksCube -- [魔方虚拟加蓝牙同步](./RubiksCube/)
