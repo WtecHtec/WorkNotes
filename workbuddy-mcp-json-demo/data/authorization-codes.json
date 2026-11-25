@@ -1,0 +1,38 @@
+[
+  {
+    "code": "XCHlyRctDDiPTiU6BcxSoAG8nDpl1spjH7axQEUWSok",
+    "client_id": "wb_tsLhhD7pMo-HVXi6TC-e8ck6",
+    "user_id": "user_001",
+    "redirect_uri": "http://127.0.0.1:54902/oauth/callback",
+    "scope": "mcp.read mcp.write",
+    "code_challenge": "Ax1SG_ZOZkaTNrlC071rr4Qi-753GNYPEWzcLoaLk6o",
+    "code_challenge_method": "S256",
+    "resource": "http://localhost:3001/mcp",
+    "expires_at": 1795532437147,
+    "used": true
+  },
+  {
+    "code": "fAW1K9GlRHYs1latFH9GzzjvpaF7euDsNPUC2JQyeSA",
+    "client_id": "wb_dm0snzdvmhTz5zTROiQ82Bqx",
+    "user_id": "user_001",
+    "redirect_uri": "http://127.0.0.1:58587/oauth/callback",
+    "scope": "mcp.read mcp.write",
+    "code_challenge": "GGA-QhzassQlbbVHYebinVQJ9ZU4HprlrwrCrFr5EmY",
+    "code_challenge_method": "S256",
+    "resource": "http://localhost:3001/mcp",
+    "expires_at": 1795533188511,
+    "used": true
+  },
+  {
+    "code": "8iOoXfRL-xRJOY0-Z1yDie0OcIQNN5y8IKx7TSNZC6g",
+    "client_id": "wb_Pb1QrKUFIOQQXoKu--l0xd8M",
+    "user_id": "user_001",
+    "redirect_uri": "http://127.0.0.1:58973/oauth/callback",
+    "scope": "mcp.read mcp.write",
+    "code_challenge": "8lvdnnz24ec9iN0TRXGmN0N7A3fif8H8iYyTr9_t31k",
+    "code_challenge_method": "S256",
+    "resource": "http://localhost:3001/mcp",
+    "expires_at": 1795533675013,
+    "used": true
+  }
+]

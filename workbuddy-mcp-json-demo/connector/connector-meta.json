@@ -1,0 +1,30 @@
+{
+  "name": "Local MCP JSON Demo",
+  "name_zh": "本地 MCP JSON 授权演示",
+  "name_en": "Local MCP JSON Auth Demo",
+  "source": "local-mcp-json-demo",
+  "type": "mcp",
+  "auth_mode": "server-side",
+  "minWorkbuddyVersion": "4.24.0",
+  "description_zh": "使用独立 OAuth 服务和本地 JSON 文件存储的 MCP 演示",
+  "description_en": "MCP demo with a separate OAuth server and local JSON persistence",
+  "examples_zh": [
+    "获取当前登录用户信息",
+    "查询演示数据"
+  ],
+  "examples_en": [
+    "Get current user information",
+    "Query demo data"
+  ],
+  "server_auth": {
+    "auth_type": "mcp_oauth",
+    "data": {
+      "mcp_oauth": {
+        "server_url": "http://localhost:3001/mcp",
+        "scopes": "mcp.read mcp.write"
+      }
+    }
+  },
+  "description": "A local demo of WorkBuddy MCP OAuth authorization using JSON file storage.",
+  "version": "1.0.0"
+}

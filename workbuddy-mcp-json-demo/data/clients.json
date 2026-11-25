@@ -1,0 +1,70 @@
+[
+  {
+    "client_id": "wb_tsLhhD7pMo-HVXi6TC-e8ck6",
+    "client_name": "WorkBuddy Connector",
+    "redirect_uris": [
+      "http://127.0.0.1:54902/oauth/callback"
+    ],
+    "grant_types": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "response_types": [
+      "code"
+    ],
+    "token_endpoint_auth_method": "none",
+    "scope": "mcp.read mcp.write",
+    "created_at": "2026-11-24T14:55:31.067Z"
+  },
+  {
+    "client_id": "wb_dm0snzdvmhTz5zTROiQ82Bqx",
+    "client_name": "WorkBuddy Connector",
+    "redirect_uris": [
+      "http://127.0.0.1:58587/oauth/callback"
+    ],
+    "grant_types": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "response_types": [
+      "code"
+    ],
+    "token_endpoint_auth_method": "none",
+    "scope": "mcp.read mcp.write",
+    "created_at": "2026-11-24T15:08:04.420Z"
+  },
+  {
+    "client_id": "wb_IvKGlaF6YxZY4AMvQEGcHE_t",
+    "client_name": "WorkBuddy Connector",
+    "redirect_uris": [
+      "http://127.0.0.1:58973/oauth/callback"
+    ],
+    "grant_types": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "response_types": [
+      "code"
+    ],
+    "token_endpoint_auth_method": "none",
+    "scope": "mcp.read mcp.write",
+    "created_at": "2026-11-24T15:09:07.766Z"
+  },
+  {
+    "client_id": "wb_Pb1QrKUFIOQQXoKu--l0xd8M",
+    "client_name": "WorkBuddy Connector",
+    "redirect_uris": [
+      "http://127.0.0.1:58973/oauth/callback"
+    ],
+    "grant_types": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "response_types": [
+      "code"
+    ],
+    "token_endpoint_auth_method": "none",
+    "scope": "mcp.read mcp.write",
+    "created_at": "2026-11-24T15:16:11.384Z"
+  }
+]

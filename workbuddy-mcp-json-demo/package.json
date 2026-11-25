@@ -1,0 +1,22 @@
+{
+  "name": "workbuddy-mcp-json-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n AUTH,MCP -c green,blue \"npm:dev:auth\" \"npm:dev:mcp\"",
+    "dev:auth": "node services/auth-server/index.js",
+    "dev:mcp": "node services/mcp-server/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "express": "^5.1.0",
+    "jose": "^6.1.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.6.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
